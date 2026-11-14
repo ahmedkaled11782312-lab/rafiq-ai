@@ -36,13 +36,16 @@ CREATE TABLE IF NOT EXISTS files (
   course_id UUID REFERENCES courses(id) ON DELETE SET NULL,
   chapter_id UUID REFERENCES chapters(id) ON DELETE SET NULL,
   original_name TEXT NOT NULL,
-  storage_key TEXT NOT NULL,
+  storage_key TEXT NOT NULL UNIQUE,
   mime_type TEXT NOT NULL,
   size_bytes BIGINT NOT NULL CHECK (size_bytes >= 0),
   checksum_sha256 TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+ALTER TABLE files ADD COLUMN IF NOT EXISTS checksum_sha256 TEXT;
+ALTER TABLE files ADD COLUMN IF NOT EXISTS chapter_id UUID REFERENCES chapters(id) ON DELETE SET NULL;
 CREATE INDEX IF NOT EXISTS files_user_course_idx ON files(user_id, course_id);
+CREATE INDEX IF NOT EXISTS files_user_chapter_idx ON files(user_id, chapter_id);
 CREATE UNIQUE INDEX IF NOT EXISTS files_user_checksum_idx ON files(user_id, checksum_sha256) WHERE checksum_sha256 IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS tasks (

@@ -1,485 +1,352 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+import 'dotenv/config'
+import express from 'express'
+import cors from 'cors'
+import helmet from 'helmet'
+import pg from 'pg'
+import bcrypt from 'bcryptjs'
+import jwt from 'jsonwebtoken'
+import multer from 'multer'
+import { PDFDocument } from 'pdf-lib'
+import { fileTypeFromFile } from 'file-type'
+import { createHash, randomUUID } from 'node:crypto'
+import { createReadStream } from 'node:fs'
+import { mkdir, unlink } from 'node:fs/promises'
+import path from 'node:path'
+import { pipeline } from 'node:stream/promises'
 
-:root {
-  font-family: 'IBM Plex Sans Arabic', 'DM Sans', sans-serif;
-  color: #20283a;
-  background: #f6f7fb;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-}
+const app = express()
+const port = Number(process.env.PORT || 4000)
+const jwtSecret = process.env.JWT_SECRET
+const storageRoot = path.resolve(process.env.FILE_STORAGE_DIR || './var/uploads')
+const maxFileBytes = Number(process.env.MAX_FILE_BYTES || 104857600)
+const allowedExtensions = new Set(['.pdf', '.docx', '.pptx', '.mp3', '.wav', '.m4a', '.ogg', '.webm', '.png', '.jpg', '.jpeg', '.gif', '.webp'])
+const allowedMime = new Set([
+  'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'audio/mpeg', 'audio/wav', 'audio/x-wav', 'audio/mp4', 'audio/ogg', 'audio/webm',
+  'image/png', 'image/jpeg', 'image/gif', 'image/webp',
+])
 
-* { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
-body { margin: 0; min-width: 320px; }
-button, input { font: inherit; }
-button { cursor: pointer; }
-input { outline: none; }
+if (process.env.NODE_ENV === 'production' && (!jwtSecret || jwtSecret.length < 32)) {
+  throw new Error('JWT_SECRET must be set to a random value of at least 32 characters in production.')
+}
+if (!jwtSecret) console.warn('Using development-only JWT secret; set JWT_SECRET before deployment.')
+const signingSecret = jwtSecret || 'local-development-only-secret-change-before-deploy-32'
 
-.app {
-  --bg: #f6f7fb;
-  --surface: #fff;
-  --surface-2: #fafbfe;
-  --text: #20283a;
-  --muted: #9299a9;
-  --line: #edf0f5;
-  --brand: #5d4bd9;
-  --soft: #f0edff;
-  min-height: 100vh;
-  background: var(--bg);
-  color: var(--text);
-}
+app.disable('x-powered-by')
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }))
+app.use(cors({ origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173' }))
+app.use(express.json({ limit: '1mb' }))
 
-.app.dark {
-  --bg: #111520;
-  --surface: #191f2c;
-  --surface-2: #202736;
-  --text: #eef0f7;
-  --muted: #a2aabd;
-  --line: #2b3342;
-  --brand: #a196ff;
-  --soft: #2c2947;
-}
+const pool = process.env.DATABASE_URL ? new pg.Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_URL.includes('localhost') ? false : { rejectUnauthorized: false },
+}) : null
 
-.sidebar {
-  position: fixed;
-  inset: 0 auto 0 0;
-  width: 256px;
-  background: var(--surface);
-  border-left: 1px solid var(--line);
-  z-index: 5;
-  padding: 25px 17px 14px;
-  display: flex;
-  flex-direction: column;
-  direction: rtl;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 0 6px 25px;
-}
-
-.brand-mark {
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  color: white;
-  background: linear-gradient(145deg, #7665ec, #5042c6);
-  border-radius: 14px;
-  box-shadow: 0 6px 15px #5948d833;
-}
-
-.brand strong { display: block; font-size: 19px; letter-spacing: -.4px; }
-.brand strong span { color: var(--brand); font-family: 'DM Sans', sans-serif; margin-right: 3px; }
-.brand small { display: block; color: var(--muted); font-size: 10px; margin-top: -3px; }
-
-.mobile-close { display: none !important; margin-right: auto !important; }
-
-.profile-mini {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 11px;
-  background: var(--surface-2);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  margin-bottom: 27px;
-}
-
-.avatar {
-  width: 37px;
-  height: 37px;
-  border-radius: 12px;
-  background: #efeaff;
-  color: #6654d9;
-  display: grid;
-  place-items: center;
-  font-weight: 700;
-}
-
-.profile-copy { display: grid; gap: 3px; flex: 1; min-width: 0; }
-.profile-copy strong { font-size: 12px; }
-.profile-copy small { color: var(--muted); font-size: 10px; }
-.muted { color: var(--muted); }
-
-.nav-label { font-size: 10px; color: #a6abba; font-weight: 600; padding: 0 11px 9px; }
-.sidebar nav { display: grid; gap: 4px; }
-.nav-item {
-  height: 41px;
-  border: 0;
-  background: transparent;
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  text-align: right;
-  padding: 0 11px;
-  border-radius: 9px;
-  color: #747d90;
-  font-size: 12px;
-  transition: .18s;
-}
-
-.dark .nav-item { color: #aab1c1; }
-.nav-item:hover { background: var(--surface-2); color: var(--text); }
-.nav-item.selected { background: var(--soft); color: var(--brand); font-weight: 600; }
-.nav-item span:nth-child(2) { flex: 1; }
-.new-badge { font: 700 9px 'DM Sans'; background: #e8e4ff; color: #6554d8; border-radius: 5px; padding: 3px 5px; }
-.tools-label { margin-top: 24px; }
-.sidebar-bottom { margin-top: auto; }
-.upgrade-card {
-  background: linear-gradient(140deg, #f4f1ff, #f7f5ff);
-  border: 1px solid #eae6ff;
-  border-radius: 12px;
-  padding: 13px;
-  margin: 0 0 15px;
-}
-.dark .upgrade-card { background: #24233b; border-color: #393550; }
-.upgrade-icon {
-  width: 29px; height: 29px; display: grid; place-items: center;
-  color: #6755da; background: #e8e4ff; border-radius: 8px; margin-bottom: 8px;
-}
-.upgrade-card strong { font-size: 12px; }
-.upgrade-card p { font-size: 10px; line-height: 1.7; color: #888da0; margin: 5px 0 10px; }
-.upgrade-card button {
-  border: 0; background: none; color: #6451d7; padding: 0; display: flex; align-items: center; gap: 5px; font-weight: 600; font-size: 10px;
-}
-.sidebar-footer { display: flex; align-items: center; justify-content: center; border-top: 1px solid var(--line); padding-top: 14px; margin-top: 8px; }
-.logout-btn {
-  width: 100%; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); border-radius: 8px; padding: 9px 12px; font-size: 10px;
-}
-
-.main-area { margin-right: 256px; min-height: 100vh; }
-.topbar {
-  height: 69px; position: sticky; top: 0; z-index: 3; display: flex; align-items: center; justify-content: space-between; padding: 0 42px; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(14px); border-bottom: 1px solid var(--line);
-}
-.topbar-right, .topbar-actions { display: flex; align-items: center; gap: 15px; }
-.crumb { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 11px; }
-.crumb strong { color: var(--text); font-weight: 600; }
-.search-box {
-  display: flex; align-items: center; gap: 9px; width: 255px; height: 36px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); padding: 0 10px; color: #a1a7b5;
-}
-.search-box input { width: 100%; border: 0; outline: 0; background: transparent; color: var(--text); font-size: 10px; }
-.search-box kbd {
-  font: 10px 'DM Sans'; white-space: nowrap; color: #a4a9b5; background: var(--surface-2); border: 1px solid var(--line); border-radius: 4px; padding: 2px 4px;
-}
-.icon-btn {
-  width: 35px; height: 35px; border: 1px solid var(--line); background: var(--surface); color: #727c90; border-radius: 9px; display: grid; place-items: center; position: relative;
-}
-.theme-toggle:hover { color: var(--brand); }
-.theme-tip {
-  position: absolute; top: 40px; white-space: nowrap; display: none; background: #252a38; color: #fff; padding: 5px 8px; border-radius: 5px; font-size: 9px;
-}
-.theme-toggle:hover .theme-tip { display: block; }
-.notification {
-  width: 35px; height: 35px; border: 1px solid var(--line); background: var(--surface); border-radius: 9px; color: #778196; display: grid; place-items: center; position: relative;
-}
-.notification i { position: absolute; width: 6px; height: 6px; top: 7px; right: 7px; background: #f38d70; border: 1px solid white; border-radius: 50%; }
-.top-avatar { width: 33px; height: 33px; border-radius: 10px; font-size: 13px; }
-.menu-toggle { display: none; }
-.content { max-width: 1390px; padding: 31px 42px 18px; margin: 0 auto; }
-.welcome-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 21px; }
-.eyebrow { display: flex; align-items: center; gap: 7px; color: #858da0; font-size: 10px; }
-.live-dot { width: 7px; height: 7px; border-radius: 50%; background: #58c69d; box-shadow: 0 0 0 3px #58c69d20; }
-.welcome-row h1 { font-size: 25px; letter-spacing: -.6px; margin: 9px 0 3px; }
-.wave { font-size: 20px; color: #f0ae57; }
-.welcome-row p { font-size: 11px; color: var(--muted); margin: 0; }
-.date-pill {
-  border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: #828a9b; font-size: 10px; padding: 9px 12px; display: flex; align-items: center; gap: 7px;
-}
-.hero-card {
-  height: 228px; border-radius: 16px; background: linear-gradient(111deg, #4036a8 1%, #5a49d1 53%, #7662e8 100%); position: relative; overflow: hidden; padding: 28px 35px; color: white; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 12px 30px #5948d927;
-}
-.hero-copy { position: relative; z-index: 1; }
-.hero-label { font-size: 10px; color: #ded9ff; display: flex; align-items: center; gap: 6px; }
-.hero-copy h2 { font-size: 25px; line-height: 1.45; margin: 7px 0 5px; letter-spacing: -.4px; }
-.hero-copy p { font-size: 10px; color: #e0dcff; line-height: 1.8; margin: 0 0 13px; }
-.hero-copy button {
-  display: flex; align-items: center; gap: 9px; color: #5546c7; background: #fff; border: 0; border-radius: 7px; padding: 9px 12px; font-size: 10px; font-weight: 600; box-shadow: 0 4px 12px #24206422;
-}
-.hero-decoration { position: absolute; border: 1px solid #ffffff15; border-radius: 50%; width: 410px; height: 410px; left: 25%; top: -280px; }
-.deco-two { width: 330px; height: 330px; left: 28%; top: -240px; }
-.hero-art { position: absolute; width: 360px; height: 228px; left: 7%; top: 0; display: grid; place-items: center; }
-.orbit { position: absolute; border: 1px solid #ffffff20; border-radius: 50%; width: 150px; height: 150px; }
-.orbit-a { width: 210px; height: 130px; transform: rotate(-25deg); }
-.orbit-b { width: 180px; height: 170px; transform: rotate(34deg); }
-.ai-orb {
-  width: 92px; height: 92px; border-radius: 29px; background: linear-gradient(145deg, #a799ff, #6957df); display: grid; place-items: center; box-shadow: 0 15px 40px #27206e65, inset 0 1px 5px #ffffff80; transform: rotate(-8deg); color: #fff;
-}
-.sparkle-star { position: absolute; color: #f6da9a; }
-.star-a { top: 43px; left: 125px; font-size: 19px; }
-.star-b { bottom: 42px; left: 222px; font-size: 17px; }
-.float-chip {
-  position: absolute; background: #fff; color: #5e51bb; border-radius: 7px; padding: 7px 10px; font-size: 9px; box-shadow: 0 7px 18px #241d6a35;
-}
-.float-chip span { color: #69bd9a; margin-left: 4px; }
-.chip-a { top: 48px; left: 50px; }
-.chip-b { bottom: 48px; left: 250px; }
-
-.library-panel {
-  margin-top: 18px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 18px 20px;
-}
-.library-header {
-  display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px;
-}
-.library-header p { margin: 4px 0 0 0; font-size: 9px; color: var(--muted); }
-.library-actions {
-  display: flex; align-items: center; gap: 8px;
-}
-.upload-button {
-  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
-  background: var(--soft); color: var(--brand); border: 1px solid #e2dcff; border-radius: 9px; padding: 8px 12px; font-size: 10px; font-weight: 600; cursor: pointer;
-}
-.library-list { display: grid; gap: 10px; }
-.library-item {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px;
-}
-.file-badge {
-  flex: none; min-width: 48px; height: 32px; display: grid; place-items: center; border-radius: 9px; background: #eef0ff; color: var(--brand); font-size: 9px; font-weight: 700;
-}
-.file-meta { flex: 1; display: grid; gap: 3px; min-width: 0; }
-.file-meta strong { font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.file-meta small { color: var(--muted); font-size: 9px; }
-.download-btn {
-  display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 8px; background: #f0edff; color: var(--brand); padding: 8px 10px; font-size: 9px; font-weight: 600;
-}
-
-.stats-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 13px; margin: 17px 0; }
-.stat-card { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 15px 13px; min-height: 115px; }
-.stat-icon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; margin-bottom: 10px; }
-.stat-violet { background: #f0edff; color: #6857d9; }
-.stat-blue { background: #eaf4ff; color: #5a9bd9; }
-.stat-orange { background: #fff2e9; color: #e99a5c; }
-.stat-green { background: #e7f7f0; color: #4db98e; }
-.stat-label { font-size: 10px; color: #81899b; }
-.stat-value { font: 700 22px 'DM Sans','IBM Plex Sans Arabic'; margin: 2px 0 1px; letter-spacing: -.5px; }
-.stat-detail { font-size: 9px; color: #a0a6b3; }
-.trend { font: 600 9px 'IBM Plex Sans Arabic'; color: #4bb88c; background: #e8f7f0; padding: 3px 5px; border-radius: 5px; margin-right: 7px; vertical-align: middle; }
-.dashboard-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 14px; }
-.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 13px; padding: 17px 18px; }
-.section-heading { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 15px; }
-.title-line { display: flex; align-items: center; gap: 8px; }
-.title-line h2 { font-size: 13px; margin: 0; font-weight: 600; }
-.heading-icon { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; }
-.violet-icon { color: #6654d5; background: #f0edff; }
-.orange-icon { color: #e99358; background: #fff1e6; }
-.green-icon { color: #4ab58b; background: #e6f7ef; }
-.section-heading p { font-size: 9px; color: #a0a6b4; margin: 5px 0 0 36px; }
-.text-action, .agenda-link { display: flex; align-items: center; gap: 6px; background: none; border: 0; color: #7768d3; font-size: 9px; padding: 5px; }
-.courses-list { display: grid; gap: 9px; }
-.course-card { display: flex; gap: 11px; border: 1px solid var(--line); border-radius: 10px; padding: 11px; background: var(--surface); }
-.course-icon { width: 39px; height: 39px; flex: none; border-radius: 11px; display: grid; place-items: center; font-weight: 600; font-size: 19px; }
-.course-icon.violet { color: #6b59d9; background: #f0edff; }
-.course-icon.blue { color: #569bd7; background: #eaf4ff; }
-.course-icon.peach { color: #e39a61; background: #fff1e7; }
-.course-icon.mint { color: #46ad86; background: #e7f7f0; }
-.course-info { flex: 1; min-width: 0; }
-.course-title-row { display: flex; align-items: center; justify-content: space-between; }
-.course-title-row strong { font-size: 11px; }
-.dots { border: 0; background: transparent; color: #a6adbb; padding: 0; display: grid; place-items: center; }
-.course-info > span { display: block; color: #a0a6b4; font-size: 9px; margin: 1px 0 8px; }
-.course-info > span i { display: inline-block; width: 3px; height: 3px; border-radius: 50%; background: #c1c6d0; vertical-align: middle; margin: 0 5px; }
-.progress-meta { display: flex; justify-content: space-between; font-size: 8px; color: #a0a6b4; margin-bottom: 4px; }
-.progress-meta b { color: #747d8e; font: 600 9px 'DM Sans'; }
-.progress-track { height: 4px; border-radius: 8px; background: #f0f1f5; overflow: hidden; }
-.dark .progress-track { background: #303746; }
-.progress-fill { height: 100%; border-radius: 8px; background: #7564e6; }
-.progress-fill.blue { background: #66a9df; }
-.progress-fill.peach { background: #eeac75; }
-.progress-fill.mint { background: #5fc49c; }
-.add-course {
-  width: 100%; height: 34px; border: 1px dashed #ded9f6; background: transparent; color: #7262ce; border-radius: 8px; font-size: 10px; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 6px;
-}
-.empty-search { padding: 30px; text-align: center; color: var(--muted); font-size: 11px; }
-.agenda-list { display: grid; }
-.agenda-item { display: grid; grid-template-columns: 49px 9px 1fr auto; align-items: center; gap: 10px; min-height: 59px; border-bottom: 1px solid var(--line); }
-.agenda-item:last-child { border-bottom: 0; }
-.agenda-time { text-align: right; display: grid; gap: 1px; }
-.agenda-time b { font: 600 11px 'DM Sans','IBM Plex Sans Arabic'; }
-.agenda-time small { font-size: 8px; color: #a4aab7; }
-.agenda-marker { width: 6px; height: 34px; border-radius: 5px; }
-.violet-line { background: #8675eb; }
-.blue-line { background: #69ace1; }
-.green-line { background: #63c69d; }
-.agenda-task { display: grid; gap: 4px; }
-.agenda-task strong { font-size: 9px; font-weight: 600; }
-.agenda-task small { font-size: 8px; color: #a0a6b4; }
-.agenda-status { font-size: 8px; color: #a0a6b4; white-space: nowrap; }
-.agenda-link { margin: 10px auto 0; }
-.activity-panel { min-height: 182px; }
-.activity-list { display: grid; }
-.activity-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); }
-.activity-row:last-child { border-bottom: 0; }
-.activity-icon { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; }
-.activity-green { color: #4eb78d; background: #e8f7f0; }
-.activity-blue { color: #599ed7; background: #eaf4ff; }
-.activity-orange { color: #e49a5e; background: #fff1e7; }
-.activity-row > div { display: grid; gap: 3px; flex: 1; }
-.activity-row strong { font-size: 9px; }
-.activity-row small { font-size: 8px; color: #a0a6b4; }
-.focus-panel { min-height: 182px; display: flex; flex-direction: column; justify-content: center; }
-.focus-copy { display: flex; gap: 10px; align-items: center; }
-.focus-icon { width: 34px; height: 34px; border-radius: 10px; background: #f0edff; color: #6b59d9; display: grid; place-items: center; }
-.focus-copy strong { font-size: 11px; }
-.focus-copy p { font-size: 9px; color: #a0a6b4; margin: 3px 0; }
-.focus-panel > button { margin: 15px 0 11px; background: var(--soft); color: #6957d5; border: 0; border-radius: 7px; padding: 8px 10px; font-size: 9px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 7px; }
-.focus-progress { height: 5px; border-radius: 5px; background: #f0f1f5; overflow: hidden; }
-.focus-progress span { display: block; height: 100%; background: #7664e5; border-radius: 5px; }
-.focus-panel > small { font-size: 8px; color: #a0a6b4; margin-top: 6px; }
-.focus-panel > small b { color: #767f90; margin-right: 5px; }
-.page-footer { display: flex; justify-content: space-between; color: #a7adba; font-size: 9px; padding: 23px 1px 0; }
-.heart { color: #e88f9d; margin-right: 3px; }
-.modal-backdrop {
-  position: fixed; inset: 0; background: #15172766; z-index: 10; display: grid; place-items: center; padding: 18px; backdrop-filter: blur(4px);
-}
-.modal { position: relative; width: min(100%, 430px); background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 25px; box-shadow: 0 22px 80px #11142a35; animation: pop .18s ease-out; }
-.modal-close { position: absolute; left: 16px; top: 16px; }
-.modal-icon { width: 42px; height: 42px; border-radius: 12px; background: var(--soft); color: var(--brand); display: grid; place-items: center; }
-.modal h2 { font-size: 17px; margin: 14px 0 4px; }
-.modal > p { font-size: 11px; color: var(--muted); margin: 0 0 20px; }
-.modal label { display: block; font-size: 10px; margin-bottom: 7px; }
-.modal input {
-  width: 100%; height: 41px; border: 1px solid var(--line); background: var(--surface-2); border-radius: 8px; padding: 0 11px; color: var(--text); font-size: 11px;
-}
-.modal input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px #6555d51c; }
-.field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; margin-top: 12px; }
-.field-grid label { margin: 0; }
-.field-grid.compact { grid-template-columns: repeat(4, minmax(0,1fr)); margin: 18px 0 0; }
-.swatch {
-  width: 100%; height: 40px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); display: grid; place-items: center; padding: 0;
-}
-.swatch.selected { border-color: var(--brand); }
-.swatch-dot { width: 18px; height: 18px; border-radius: 50%; display: block; }
-.swatch-dot.violet { background: #7564e5; }
-.swatch-dot.blue { background: #66a9df; }
-.swatch-dot.peach { background: #eeac75; }
-.swatch-dot.mint { background: #5fc49c; }
-.modal-actions { display: flex; gap: 8px; margin-top: 17px; }
-.modal-actions button { height: 37px; border-radius: 8px; padding: 0 12px; font-size: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; }
-.cancel-btn { border: 1px solid var(--line); background: var(--surface); color: var(--muted); }
-.primary-btn { border: 0; background: #5d4bd9; color: #fff; flex: 1; }
-.toast {
-  position: fixed; z-index: 20; bottom: 22px; left: 50%; transform: translateX(-50%); background: #252a38; color: #fff; border-radius: 9px; display: flex; align-items: center; gap: 8px; padding: 11px 15px; font-size: 11px; box-shadow: 0 8px 30px #0003; animation: pop .2s ease-out;
-}
-.toast svg { color: #6cdbab; }
-.scrim { display: none; }
-
-.auth-shell {
-  min-height: 100vh; display: grid; grid-template-columns: 1.1fr 0.9fr; align-items: center; padding: 28px; gap: 24px; background: linear-gradient(135deg, #eff3ff, #f6f7fb);
-}
-.auth-card {
-  background: rgba(255, 255, 255, 0.7); border: 1px solid rgba(107, 89, 217, 0.08); border-radius: 24px; padding: 26px; box-shadow: 0 14px 40px rgba(80, 70, 160, 0.08);
-}
-.auth-intro {
-  background: linear-gradient(180deg, #1d1b3e, #4137ac);
-  color: white; padding: 32px 28px; min-height: 620px; display: flex; flex-direction: column; justify-content: center;
-}
-.auth-intro .brand strong { font-size: 22px; }
-.auth-intro .brand small { color: rgba(255,255,255,0.7); }
-.auth-intro h1 { font-size: clamp(32px, 4vw, 52px); line-height: 1.1; margin: 22px 0 12px; }
-.auth-intro p { font-size: 14px; line-height: 1.9; color: #eae7ff; max-width: 500px; }
-.auth-intro ul { list-style: none; padding: 0; margin: 18px 0 0; display: grid; gap: 12px; }
-.auth-intro li { display: flex; align-items: center; gap: 10px; color: #f1f1ff; font-size: 14px; }
-.intro-badge {
-  width: fit-content; display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.14); border-radius: 999px; padding: 8px 12px; font-size: 11px; color: #f5f1ff;
-}
-.logo-block { padding: 0; }
-.auth-panel {
-  background: rgba(255,255,255,0.9); display: flex; flex-direction: column; justify-content: center; min-height: 620px;
-}
-.auth-tabs { display: inline-flex; background: #f2f4fb; border-radius: 10px; padding: 4px; width: fit-content; margin-bottom: 22px; }
-.auth-tabs button {
-  border: 0; background: transparent; padding: 10px 16px; border-radius: 8px; font-size: 12px; color: #697087;
-}
-.auth-tabs .active { background: #fff; color: var(--brand); box-shadow: 0 4px 12px rgba(93, 75, 217, 0.08); }
-.auth-form { display: grid; gap: 18px; }
-.auth-form label { display: grid; gap: 8px; font-size: 11px; color: #5f667d; }
-.auth-form input {
-  width: 100%; height: 46px; border: 1px solid var(--line); background: white; border-radius: 10px; padding: 0 12px; color: var(--text); font-size: 12px;
-}
-.auth-submit { margin-top: 8px; }
-.auth-meta { display: grid; gap: 6px; margin-top: 18px; color: #8b92a5; font-size: 10px; }
-
-@keyframes pop { from { opacity: 0; transform: translateY(7px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
-
-@media (min-width: 1450px) {
-  .content { padding-top: 38px; }
-  .hero-card { height: 244px; }
-  .hero-art { height: 244px; }
-  .stats-grid { margin: 20px 0; }
-  .panel { padding: 19px 21px; }
-  .course-card { padding: 13px; }
-  .stat-card { min-height: 125px; }
-}
-
-@media (max-width: 1100px) {
-  .content { padding: 27px 25px 18px; }
-  .topbar { padding: 0 25px; }
-  .sidebar { width: 232px; }
-  .main-area { margin-right: 232px; }
-  .hero-art { left: 0; opacity: .85; }
-  .dashboard-grid { grid-template-columns: 1fr 1fr; }
-  .agenda-item { grid-template-columns: 43px 7px 1fr; gap: 8px; }
-  .agenda-status { display: none; }
-  .library-item { flex-wrap: wrap; }
-}
-
-@media (max-width: 780px) {
-  .sidebar {
-    transform: translateX(110%); right: 0; left: auto; width: 270px; transition: transform .24s; box-shadow: -15px 0 40px #15172712; z-index: 12;
+const authRequired = (req, res, next) => {
+  const bearer = req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.slice(7) : ''
+  const token = bearer || (req.path.endsWith('/content') ? String(req.query.token || '') : '')
+  if (!token) return res.status(401).json({ error: 'UNAUTHORIZED', message: 'يجب تسجيل الدخول أولاً.' })
+  try {
+    req.user = jwt.verify(token, signingSecret)
+    return next()
+  } catch {
+    return res.status(401).json({ error: 'UNAUTHORIZED', message: 'رمز الدخول غير صالح.' })
   }
-  .sidebar-open { transform: translateX(0); }
-  .mobile-close { display: grid !important; }
-  .scrim { display: block; position: fixed; inset: 0; background: #12152268; border: 0; z-index: 4; }
-  .main-area { margin-right: 0; }
-  .topbar { height: 60px; padding: 0 17px; }
-  .menu-toggle { display: grid; }
-  .crumb { font-size: 10px; }
-  .search-box { width: 36px; padding: 0; justify-content: center; border-color: transparent; background: transparent; }
-  .search-box input, .search-box kbd { display: none; }
-  .topbar-actions { gap: 8px; }
-  .content { padding: 23px 17px 15px; }
-  .welcome-row { align-items: flex-start; }
-  .welcome-row h1 { font-size: 22px; }
-  .welcome-row p { font-size: 10px; max-width: 300px; line-height: 1.7; }
-  .date-pill { font-size: 0; padding: 9px; }
-  .date-pill svg { width: 17px; height: 17px; }
-  .hero-card { height: 211px; padding: 23px; }
-  .hero-art { left: -103px; opacity: .45; }
-  .hero-copy h2 { font-size: 23px; }
-  .hero-copy p { font-size: 9px; }
-  .library-panel { padding: 14px; }
-  .library-header { align-items: flex-start; flex-direction: column; }
-  .library-item { flex-direction: column; align-items: flex-start; }
-  .download-btn { width: 100%; justify-content: center; }
-  .stats-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; margin: 12px 0; }
-  .stat-card { min-height: 108px; padding: 12px; }
-  .dashboard-grid { grid-template-columns: 1fr; gap: 11px; }
-  .activity-panel, .focus-panel { min-height: auto; }
-  .page-footer { padding-top: 18px; font-size: 8px; }
-  .auth-shell { grid-template-columns: 1fr; padding: 18px; }
-  .auth-intro, .auth-panel { min-height: 0; }
 }
 
-@media (max-width: 420px) {
-  .topbar-actions { gap: 5px; }
-  .notification, .theme-toggle { width: 32px; height: 32px; }
-  .top-avatar { width: 30px; height: 30px; }
-  .topbar { padding: 0 12px; }
-  .content { padding-right: 13px; padding-left: 13px; }
-  .welcome-row h1 { font-size: 20px; }
-  .welcome-row p { max-width: 245px; }
-  .hero-card { padding: 19px; }
-  .hero-art { left: -145px; }
-  .hero-copy h2 { font-size: 21px; }
-  .hero-copy p { max-width: 215px; }
-  .date-pill { margin-top: 6px; }
+const requireDatabase = (_req, res, next) => {
+  if (!pool) return res.status(503).json({ error: 'DATABASE_REQUIRED', message: 'تخزين الملفات يتطلب إعداد PostgreSQL عبر DATABASE_URL.' })
+  return next()
 }
+const safeName = (name) => String(name || '').replace(/[\\/\u0000-\u001f]/g, '_').trim().slice(0, 240) || 'file'
+const digestFile = (filePath) => new Promise((resolve, reject) => {
+  const hash = createHash('sha256')
+  const stream = createReadStream(filePath)
+  stream.on('error', reject)
+  stream.on('data', (chunk) => hash.update(chunk))
+  stream.on('end', () => resolve(hash.digest('hex')))
+})
+const metadata = (row) => ({
+  id: row.id,
+  name: row.original_name,
+  type: row.mime_type,
+  size: Number(row.size_bytes),
+  uploadedAt: row.created_at,
+  courseId: row.course_id,
+  course: row.course_title || 'عام',
+  chapterId: row.chapter_id,
+  chapter: row.chapter_title || '',
+  checksum: row.checksum_sha256,
+})
+const diskPathFor = (storageKey) => {
+  const resolved = path.resolve(storageRoot, storageKey)
+  if (!resolved.startsWith(`${storageRoot}${path.sep}`)) throw new Error('Invalid storage key')
+  return resolved
+}
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: async (req, _file, callback) => {
+      try {
+        const dir = path.join(storageRoot, String(req.user.sub))
+        await mkdir(dir, { recursive: true })
+        callback(null, dir)
+      } catch (error) { callback(error) }
+    },
+    filename: (_req, _file, callback) => callback(null, randomUUID()),
+  }),
+  limits: { fileSize: maxFileBytes, files: 1 },
+  fileFilter: (_req, file, callback) => {
+    const ext = path.extname(file.originalname).toLowerCase()
+    if (!allowedExtensions.has(ext) || !allowedMime.has(file.mimetype)) {
+      return callback(new Error('نوع الملف غير مدعوم. ارفع PDF أو DOCX أو PPTX أو ملف صوت أو صورة مدعومة.'))
+    }
+    callback(null, true)
+  },
+})
+
+app.get('/api/health', async (_req, res) => {
+  let database = 'not_configured'
+  if (pool) {
+    try { await pool.query('SELECT 1'); database = 'connected' }
+    catch { database = 'unavailable' }
+  }
+  res.status(database === 'unavailable' ? 503 : 200).json({ status: database === 'unavailable' ? 'degraded' : 'ok', database, storage: storageRoot })
+})
+
+app.post('/api/auth/register', async (req, res) => {
+  const name = String(req.body?.name || '').trim()
+  const email = String(req.body?.email || '').trim().toLowerCase()
+  const password = String(req.body?.password || '')
+  if (name.length < 2 || name.length > 120 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || password.length < 8) {
+    return res.status(400).json({ error: 'INVALID_INPUT', message: 'أدخل اسماً وبريداً صحيحاً وكلمة مرور من 8 أحرف على الأقل.' })
+  }
+  if (!pool) return res.status(503).json({ error: 'DATABASE_REQUIRED', message: 'التسجيل يحتاج إلى إعداد PostgreSQL؛ لم يتم إنشاء حساب تجريبي.' })
+  try {
+    const hash = await bcrypt.hash(password, 12)
+    const result = await pool.query('INSERT INTO users (email, password_hash, display_name) VALUES ($1,$2,$3) RETURNING id,email,display_name,role', [email, hash, name])
+    const user = result.rows[0]
+    return res.status(201).json({ token: jwt.sign({ sub: user.id, email: user.email, role: user.role }, signingSecret, { expiresIn: '7d' }), user: { id: user.id, email: user.email, name: user.display_name, role: user.role } })
+  } catch (error) {
+    if (error.code === '23505') return res.status(409).json({ error: 'EMAIL_EXISTS', message: 'هذا البريد مسجل بالفعل.' })
+    console.error('Register failed:', error)
+    return res.status(500).json({ error: 'SERVER_ERROR', message: 'تعذر إنشاء الحساب.' })
+  }
+})
+
+app.post('/api/auth/login', async (req, res) => {
+  const email = String(req.body?.email || '').trim().toLowerCase()
+  const password = String(req.body?.password || '')
+  if (!email || !password) return res.status(400).json({ error: 'INVALID_INPUT', message: 'البريد وكلمة المرور مطلوبان.' })
+  if (!pool) return res.status(503).json({ error: 'DATABASE_REQUIRED', message: 'تسجيل الدخول يحتاج إلى إعداد PostgreSQL.' })
+  try {
+    const result = await pool.query('SELECT id,email,display_name,role,password_hash FROM users WHERE email=$1', [email])
+    const user = result.rows[0]
+    if (!user || !(await bcrypt.compare(password, user.password_hash))) return res.status(401).json({ error: 'INVALID_CREDENTIALS', message: 'بيانات الدخول غير صحيحة.' })
+    return res.json({ token: jwt.sign({ sub: user.id, email: user.email, role: user.role }, signingSecret, { expiresIn: '7d' }), user: { id: user.id, email: user.email, name: user.display_name, role: user.role } })
+  } catch (error) {
+    console.error('Login failed:', error)
+    return res.status(500).json({ error: 'SERVER_ERROR', message: 'تعذر تسجيل الدخول.' })
+  }
+})
+
+app.get('/api/courses', authRequired, requireDatabase, async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT id,title,color FROM courses WHERE user_id=$1 ORDER BY created_at DESC', [req.user.sub])
+    return res.json({ items: rows.map((row) => ({ ...row, teacher: 'المعلم', level: 'الثانوية', progress: 0, lessons: 0 })) })
+  } catch (error) { console.error(error); return res.status(500).json({ error: 'SERVER_ERROR', message: 'تعذر جلب المواد.' }) }
+})
+
+app.get('/api/courses/:courseId/chapters', authRequired, requireDatabase, async (req, res) => {
+  try {
+    const owned = await pool.query('SELECT id FROM courses WHERE id=$1 AND user_id=$2', [req.params.courseId, req.user.sub])
+    if (!owned.rowCount) return res.status(404).json({ error: 'NOT_FOUND', message: 'المادة غير موجودة.' })
+    const { rows } = await pool.query('SELECT id,title,position FROM chapters WHERE course_id=$1 ORDER BY position ASC', [req.params.courseId])
+    return res.json({ items: rows })
+  } catch (error) { console.error(error); return res.status(500).json({ error: 'SERVER_ERROR', message: 'تعذر جلب الفصول.' }) }
+})
+
+app.post('/api/courses/:courseId/chapters', authRequired, requireDatabase, async (req, res) => {
+  const title = String(req.body?.title || '').trim()
+  if (!title || title.length > 180) return res.status(400).json({ error: 'INVALID_INPUT', message: 'عنوان الفصل مطلوب (حتى 180 حرفاً).' })
+  try {
+    const owned = await pool.query('SELECT id FROM courses WHERE id=$1 AND user_id=$2', [req.params.courseId, req.user.sub])
+    if (!owned.rowCount) return res.status(404).json({ error: 'NOT_FOUND', message: 'المادة غير موجودة.' })
+    const position = Number.isInteger(req.body?.position) && req.body.position >= 0 ? req.body.position : (await pool.query('SELECT COALESCE(MAX(position),-1)+1 AS position FROM chapters WHERE course_id=$1', [req.params.courseId])).rows[0].position
+    const result = await pool.query('INSERT INTO chapters(course_id,title,position) VALUES($1,$2,$3) RETURNING id,title,position', [req.params.courseId,title,position])
+    return res.status(201).json({ item: result.rows[0] })
+  } catch (error) { console.error(error); return res.status(500).json({ error: 'SERVER_ERROR', message: 'تعذر إنشاء الفصل.' }) }
+})
+
+app.get('/api/library/files', authRequired, requireDatabase, async (req, res) => {
+  const { q = '', courseId = '', chapterId = '', type = '', sort = 'newest' } = req.query
+  const ordering = sort === 'name' ? 'f.original_name ASC' : sort === 'oldest' ? 'f.created_at ASC' : 'f.created_at DESC'
+  try {
+    const { rows } = await pool.query(
+      `SELECT f.id,f.original_name,f.mime_type,f.size_bytes,f.course_id,f.chapter_id,f.checksum_sha256,f.created_at,c.title AS course_title,ch.title AS chapter_title
+       FROM files f LEFT JOIN courses c ON c.id=f.course_id LEFT JOIN chapters ch ON ch.id=f.chapter_id
+       WHERE f.user_id=$1 AND ($2='' OR f.original_name ILIKE '%'||$2||'%')
+         AND ($3='' OR f.course_id::text=$3) AND ($4='' OR f.chapter_id::text=$4)
+         AND ($5='' OR f.mime_type LIKE $5||'/%' OR lower(f.original_name) LIKE '%.'||$5)
+       ORDER BY ${ordering} LIMIT 200`,
+      [req.user.sub, String(q), String(courseId), String(chapterId), String(type)],
+    )
+    return res.json({ items: rows.map(metadata) })
+  } catch (error) { console.error('Library list failed:', error); return res.status(500).json({ error: 'SERVER_ERROR', message: 'تعذر تحميل المكتبة.' }) }
+})
+
+app.post('/api/library/files', authRequired, requireDatabase, (req, res, next) => upload.single('file')(req, res, (error) => {
+  if (error) return res.status(error.code === 'LIMIT_FILE_SIZE' ? 413 : 400).json({ error: 'UPLOAD_FAILED', message: error.code === 'LIMIT_FILE_SIZE' ? 'حجم الملف يتجاوز الحد المسموح.' : error.message })
+  next()
+}), async (req, res) => {
+  const uploaded = req.file
+  if (!uploaded) return res.status(400).json({ error: 'FILE_REQUIRED', message: 'اختر ملفاً للرفع.' })
+  const cleanup = async () => { try { await unlink(uploaded.path) } catch {} }
+  try {
+    const ext = path.extname(uploaded.originalname).toLowerCase()
+    const detected = await fileTypeFromFile(uploaded.path)
+    const expected = ext === '.pdf' ? 'application/pdf' : ext === '.png' ? 'image/png' : ext === '.jpg' || ext === '.jpeg' ? 'image/jpeg' : ext === '.gif' ? 'image/gif' : ext === '.webp' ? 'image/webp' : null
+    if (expected && detected?.mime !== expected) {
+      await cleanup()
+      return res.status(415).json({ error: 'INVALID_FILE_CONTENT', message: 'محتوى الملف لا يطابق امتداده.' })
+    }
+    if (['.docx','.pptx'].includes(ext) && detected?.mime !== 'application/zip') {
+      await cleanup()
+      return res.status(415).json({ error: 'INVALID_FILE_CONTENT', message: 'ملف Office غير صالح أو لا يطابق امتداده.' })
+    }
+    if (ext === '.pdf' && !detected) {
+      await cleanup()
+      return res.status(415).json({ error: 'INVALID_FILE_CONTENT', message: 'تعذر التحقق من ملف PDF.' })
+    }
+    const checksum = await digestFile(uploaded.path)
+    const courseId = req.body.courseId || null
+    const chapterId = req.body.chapterId || null
+    if (courseId) {
+      const course = await pool.query('SELECT id FROM courses WHERE id=$1 AND user_id=$2', [courseId, req.user.sub])
+      if (!course.rowCount) { await cleanup(); return res.status(404).json({ error: 'COURSE_NOT_FOUND', message: 'المادة غير موجودة.' }) }
+    }
+    if (chapterId) {
+      const chapter = await pool.query('SELECT ch.id FROM chapters ch JOIN courses c ON c.id=ch.course_id WHERE ch.id=$1 AND c.user_id=$2 AND ($3::uuid IS NULL OR c.id=$3)', [chapterId, req.user.sub, courseId])
+      if (!chapter.rowCount) { await cleanup(); return res.status(400).json({ error: 'CHAPTER_NOT_FOUND', message: 'الفصل غير موجود أو لا يتبع المادة المختارة.' }) }
+    }
+    const storageKey = `${req.user.sub}/${uploaded.filename}`
+    const result = await pool.query(
+      `INSERT INTO files(user_id,course_id,chapter_id,original_name,storage_key,mime_type,size_bytes,checksum_sha256)
+       VALUES($1,$2,$3,$4,$5,$6,$7,$8)
+       RETURNING id,original_name,mime_type,size_bytes,course_id,chapter_id,checksum_sha256,created_at`,
+      [req.user.sub,courseId,chapterId,safeName(uploaded.originalname),storageKey,uploaded.mimetype,uploaded.size,checksum],
+    )
+    return res.status(201).json({ item: metadata(result.rows[0]) })
+  } catch (error) {
+    await cleanup()
+    if (error.code === '23505') return res.status(409).json({ error: 'DUPLICATE_FILE', message: 'هذا الملف موجود بالفعل في مكتبتك.' })
+    console.error('Upload failed:', error)
+    return res.status(500).json({ error: 'UPLOAD_FAILED', message: 'فشل حفظ الملف؛ يمكنك إعادة المحاولة.' })
+  }
+})
+
+const getOwnedFile = (id, userId) => pool.query(
+  `SELECT f.*,c.title AS course_title,ch.title AS chapter_title FROM files f
+   LEFT JOIN courses c ON c.id=f.course_id LEFT JOIN chapters ch ON ch.id=f.chapter_id
+   WHERE f.id=$1 AND f.user_id=$2`, [id,userId],
+)
+
+app.get('/api/library/files/:id/content', authRequired, requireDatabase, async (req, res) => {
+  try {
+    const result = await getOwnedFile(req.params.id, req.user.sub)
+    if (!result.rowCount) return res.status(404).json({ error: 'NOT_FOUND', message: 'الملف غير موجود.' })
+    const file = result.rows[0]
+    const absolute = diskPathFor(file.storage_key)
+    res.setHeader('Content-Type', file.mime_type)
+    res.setHeader('Content-Length', file.size_bytes)
+    res.setHeader('Content-Disposition', `${req.query.download === '1' ? 'attachment' : 'inline'}; filename*=UTF-8''${encodeURIComponent(file.original_name)}`)
+    return pipeline(createReadStream(absolute), res).catch((error) => { if (!res.headersSent) res.status(404).json({ error: 'FILE_MISSING', message: 'الملف غير موجود في مساحة التخزين.' }); else res.destroy(error) })
+  } catch (error) { console.error(error); return res.status(500).json({ error: 'SERVER_ERROR', message: 'تعذر فتح الملف.' }) }
+})
+
+app.patch('/api/library/files/:id', authRequired, requireDatabase, async (req, res) => {
+  const name = safeName(req.body?.name)
+  if (!name || name === 'file') return res.status(400).json({ error: 'INVALID_INPUT', message: 'اسم الملف مطلوب.' })
+  try {
+    const result = await pool.query(`UPDATE files SET original_name=$1 WHERE id=$2 AND user_id=$3 RETURNING id,original_name,mime_type,size_bytes,course_id,chapter_id,checksum_sha256,created_at`, [name,req.params.id,req.user.sub])
+    if (!result.rowCount) return res.status(404).json({ error: 'NOT_FOUND', message: 'الملف غير موجود.' })
+    return res.json({ item: metadata(result.rows[0]) })
+  } catch (error) { console.error(error); return res.status(500).json({ error: 'SERVER_ERROR', message: 'تعذرت إعادة تسمية الملف.' }) }
+})
+
+app.delete('/api/library/files/:id', authRequired, requireDatabase, async (req, res) => {
+  const client = await pool.connect()
+  let file
+  try {
+    await client.query('BEGIN')
+    const found = await client.query('SELECT id,storage_key FROM files WHERE id=$1 AND user_id=$2 FOR UPDATE', [req.params.id,req.user.sub])
+    if (!found.rowCount) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'NOT_FOUND', message: 'الملف غير موجود.' }) }
+    file = found.rows[0]
+    await client.query('DELETE FROM files WHERE id=$1 AND user_id=$2', [file.id,req.user.sub])
+    await client.query('COMMIT')
+    try { await unlink(diskPathFor(file.storage_key)) } catch (error) { if (error.code !== 'ENOENT') console.error('File cleanup needed:', error) }
+    return res.json({ success: true })
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => {})
+    console.error(error)
+    return res.status(500).json({ error: 'SERVER_ERROR', message: 'تعذر حذف الملف.' })
+  } finally { client.release() }
+})
+
+app.post('/api/library/merge-pdf', authRequired, requireDatabase, async (req, res) => {
+  const fileIds = req.body?.fileIds
+  const requestedName = safeName(req.body?.name || 'الكتاب المدمج.pdf')
+  if (!Array.isArray(fileIds) || fileIds.length < 2 || fileIds.length > 100 || fileIds.some((id) => typeof id !== 'string')) {
+    return res.status(400).json({ error: 'INVALID_INPUT', message: 'حدد فصلين PDF على الأقل وبحد أقصى 100 فصل.' })
+  }
+  const client = await pool.connect()
+  let savedPath
+  try {
+    const { rows } = await client.query(
+      `SELECT f.* FROM files f WHERE f.user_id=$1 AND f.id=ANY($2::uuid[])`, [req.user.sub,fileIds],
+    )
+    if (rows.length !== fileIds.length) return res.status(404).json({ error: 'FILE_NOT_FOUND', message: 'بعض ملفات الفصول غير موجودة في حسابك.' })
+    const byId = new Map(rows.map((row) => [row.id,row]))
+    const ordered = fileIds.map((id) => byId.get(id))
+    if (ordered.some((file) => file.mime_type !== 'application/pdf')) return res.status(415).json({ error: 'PDF_ONLY', message: 'دمج الكتب متاح لملفات PDF فقط.' })
+    const courseIds = new Set(ordered.map((file) => file.course_id).filter(Boolean))
+    if (courseIds.size !== 1) return res.status(400).json({ error: 'COURSE_MISMATCH', message: 'اختر فصولاً من مادة واحدة.' })
+    const merged = await PDFDocument.create()
+    for (const file of ordered) {
+      const source = await PDFDocument.load(await (await import('node:fs/promises')).readFile(diskPathFor(file.storage_key)))
+      const pages = await merged.copyPages(source, source.getPageIndices())
+      pages.forEach((page) => merged.addPage(page))
+    }
+    const bytes = await merged.save()
+    const id = randomUUID()
+    const directory = path.join(storageRoot,String(req.user.sub))
+    await mkdir(directory,{recursive:true})
+    savedPath = path.join(directory,id)
+    const { writeFile } = await import('node:fs/promises')
+    await writeFile(savedPath,bytes,{flag:'wx'})
+    const name = requestedName.toLowerCase().endsWith('.pdf') ? requestedName : `${requestedName}.pdf`
+    const storageKey = `${req.user.sub}/${id}`
+    const insert = await client.query(
+      `INSERT INTO files(user_id,course_id,original_name,storage_key,mime_type,size_bytes,checksum_sha256)
+       VALUES($1,$2,$3,$4,'application/pdf',$5,$6)
+       RETURNING id,original_name,mime_type,size_bytes,course_id,chapter_id,checksum_sha256,created_at`,
+      [req.user.sub,[...courseIds][0],name,storageKey,bytes.length,createHash('sha256').update(bytes).digest('hex')],
+    )
+    return res.status(201).json({ item: metadata(insert.rows[0]) })
+  } catch (error) {
+    if (savedPath) await unlink(savedPath).catch(() => {})
+    console.error('PDF merge failed:',error)
+    return res.status(422).json({ error: 'MERGE_FAILED', message: 'تعذر دمج الملفات؛ تحقق من سلامة ملفات PDF وترتيبها.' })
+  } finally { client.release() }
+})
+
+app.use((error, _req, res, _next) => {
+  console.error('Unhandled API error:', error)
+  if (res.headersSent) return res.end()
+  return res.status(500).json({ error: 'INTERNAL_ERROR', message: 'حدث خطأ غير متوقع.' })
+})
+
+await mkdir(storageRoot,{recursive:true})
+const server = app.listen(port, () => console.log(`Rafiq AI API listening on http://localhost:${port}`))
+export { app, server, pool }
