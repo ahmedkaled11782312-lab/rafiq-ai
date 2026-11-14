@@ -1,8 +1,856 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-:root{font-family:'IBM Plex Sans Arabic','DM Sans',sans-serif;color:#20283a;background:#f6f7fb;font-synthesis:none;text-rendering:optimizeLegibility}*{box-sizing:border-box}body{margin:0;min-width:320px}button,input{font:inherit}button{cursor:pointer}.app{--bg:#f6f7fb;--surface:#fff;--surface-2:#fafbfe;--text:#20283a;--muted:#9299a9;--line:#edf0f5;--brand:#5d4bd9;--soft:#f0edff;min-height:100vh;background:var(--bg);color:var(--text);transition:background .25s,color .25s}.app.dark{--bg:#111520;--surface:#191f2c;--surface-2:#202736;--text:#eef0f7;--muted:#a2aabd;--line:#2b3342;--brand:#a196ff;--soft:#2c2947}.sidebar{position:fixed;inset:0 auto 0 0;width:256px;background:var(--surface);border-left:1px solid var(--line);z-index:5;padding:25px 17px 14px;display:flex;flex-direction:column;direction:rtl}.brand{display:flex;align-items:center;gap:11px;padding:0 6px 25px}.brand-mark{display:grid;place-items:center;width:42px;height:42px;color:white;background:linear-gradient(145deg,#7665ec,#5042c6);border-radius:14px;box-shadow:0 6px 15px #5948d833}.brand strong{display:block;font-size:19px;letter-spacing:-.4px}.brand strong span{color:var(--brand);font-family:'DM Sans',sans-serif;margin-right:3px}.brand small{display:block;color:var(--muted);font-size:10px;margin-top:-3px}.mobile-close{display:none!important;margin-right:auto!important}.profile-mini{display:flex;align-items:center;gap:10px;padding:11px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;margin-bottom:27px}.avatar{width:37px;height:37px;border-radius:12px;background:#efeaff;color:#6654d9;display:grid;place-items:center;font-weight:700}.profile-copy{display:grid;gap:3px;flex:1;min-width:0}.profile-copy strong{font-size:12px}.profile-copy small{color:var(--muted);font-size:10px}.muted{color:var(--muted)}.nav-label{font-size:10px;color:#a6abba;font-weight:600;padding:0 11px 9px}.sidebar nav{display:grid;gap:4px}.nav-item{height:41px;border:0;background:transparent;display:flex;align-items:center;gap:11px;text-align:right;padding:0 11px;border-radius:9px;color:#747d90;font-size:12px;transition:.18s}.dark .nav-item{color:#aab1c1}.nav-item:hover{background:var(--surface-2);color:var(--text)}.nav-item.selected{background:var(--soft);color:var(--brand);font-weight:600}.nav-item span:nth-child(2){flex:1}.new-badge{font:700 9px 'DM Sans';background:#e8e4ff;color:#6554d8;border-radius:5px;padding:3px 5px}.tools-label{margin-top:24px}.sidebar-bottom{margin-top:auto}.upgrade-card{background:linear-gradient(140deg,#f4f1ff,#f7f5ff);border:1px solid #eae6ff;border-radius:12px;padding:13px;margin:0 0 15px}.dark .upgrade-card{background:#24233b;border-color:#393550}.upgrade-icon{width:29px;height:29px;display:grid;place-items:center;color:#6755da;background:#e8e4ff;border-radius:8px;margin-bottom:8px}.upgrade-card strong{font-size:12px}.upgrade-card p{font-size:10px;line-height:1.7;color:#888da0;margin:5px 0 10px}.upgrade-card button{border:0;background:none;color:#6451d7;padding:0;display:flex;align-items:center;gap:5px;font-weight:600;font-size:10px}.sidebar-bottom>.nav-item{width:100%}.sidebar-footer{display:flex;align-items:center;gap:9px;border-top:1px solid var(--line);padding:14px 5px 0;margin-top:8px}.avatar-small{width:32px;height:32px;border-radius:10px;font-size:13px}.main-area{margin-right:256px;min-height:100vh}.topbar{height:69px;position:sticky;top:0;z-index:3;display:flex;align-items:center;justify-content:space-between;padding:0 42px;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}.topbar-right,.topbar-actions{display:flex;align-items:center;gap:15px}.crumb{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:11px}.crumb strong{color:var(--text);font-weight:600}.search-box{display:flex;align-items:center;gap:9px;width:255px;height:36px;border:1px solid var(--line);border-radius:9px;background:var(--surface);padding:0 10px;color:#a1a7b5}.search-box input{width:100%;border:0;outline:0;background:transparent;color:var(--text);font-size:10px}.search-box kbd{font:10px 'DM Sans';white-space:nowrap;color:#a4a9b5;background:var(--surface-2);border:1px solid var(--line);border-radius:4px;padding:2px 4px}.icon-btn{width:35px;height:35px;border:1px solid var(--line);background:var(--surface);color:#727c90;border-radius:9px;display:grid;place-items:center;position:relative}.theme-toggle:hover{color:var(--brand)}.theme-tip{position:absolute;top:40px;white-space:nowrap;display:none;background:#252a38;color:#fff;padding:5px 8px;border-radius:5px;font-size:9px}.theme-toggle:hover .theme-tip{display:block}.notification{width:35px;height:35px;border:1px solid var(--line);background:var(--surface);border-radius:9px;color:#778196;display:grid;place-items:center;position:relative}.notification i{position:absolute;width:6px;height:6px;top:7px;right:7px;background:#f38d70;border:1px solid white;border-radius:50%}.top-avatar{width:33px;height:33px;border-radius:10px;font-size:13px}.menu-toggle{display:none}.content{max-width:1390px;padding:31px 42px 18px;margin:0 auto}.welcome-row{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:21px}.eyebrow{display:flex;align-items:center;gap:7px;color:#858da0;font-size:10px}.live-dot{width:7px;height:7px;border-radius:50%;background:#58c69d;box-shadow:0 0 0 3px #58c69d20}.welcome-row h1{font-size:25px;letter-spacing:-.6px;margin:9px 0 3px}.wave{font-size:20px;color:#f0ae57}.welcome-row p{font-size:11px;color:var(--muted);margin:0}.date-pill{border:1px solid var(--line);border-radius:8px;background:var(--surface);color:#828a9b;font-size:10px;padding:9px 12px;display:flex;align-items:center;gap:7px}.hero-card{height:228px;border-radius:16px;background:linear-gradient(111deg,#4036a8 1%,#5a49d1 53%,#7662e8 100%);position:relative;overflow:hidden;padding:28px 35px;color:white;display:flex;justify-content:space-between;align-items:center;box-shadow:0 12px 30px #5948d927}.hero-copy{position:relative;z-index:1}.hero-label{font-size:10px;color:#ded9ff;display:flex;align-items:center;gap:6px}.hero-copy h2{font-size:25px;line-height:1.45;margin:7px 0 5px;letter-spacing:-.4px}.hero-copy p{font-size:10px;color:#e0dcff;line-height:1.8;margin:0 0 13px}.hero-copy button{display:flex;align-items:center;gap:9px;color:#5546c7;background:#fff;border:0;border-radius:7px;padding:9px 12px;font-size:10px;font-weight:600;box-shadow:0 4px 12px #24206422}.hero-decoration{position:absolute;border:1px solid #ffffff15;border-radius:50%;width:410px;height:410px;left:25%;top:-280px}.deco-two{width:330px;height:330px;left:28%;top:-240px}.hero-art{position:absolute;width:360px;height:228px;left:7%;top:0;display:grid;place-items:center}.orbit{position:absolute;border:1px solid #ffffff20;border-radius:50%;width:150px;height:150px}.orbit-a{width:210px;height:130px;transform:rotate(-25deg)}.orbit-b{width:180px;height:170px;transform:rotate(34deg)}.ai-orb{width:92px;height:92px;border-radius:29px;background:linear-gradient(145deg,#a799ff,#6957df);display:grid;place-items:center;box-shadow:0 15px 40px #27206e65,inset 0 1px 5px #ffffff80;transform:rotate(-8deg);color:#fff}.sparkle-star{position:absolute;color:#f6da9a}.star-a{top:43px;left:125px;font-size:19px}.star-b{bottom:42px;left:222px;font-size:17px}.float-chip{position:absolute;background:#fff;color:#5e51bb;border-radius:7px;padding:7px 10px;font-size:9px;box-shadow:0 7px 18px #241d6a35}.float-chip span{color:#69bd9a;margin-left:4px}.chip-a{top:48px;left:50px}.chip-b{bottom:48px;left:250px}.stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin:17px 0}.stat-card{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 15px 13px;min-height:115px}.stat-icon{display:grid;place-items:center;width:32px;height:32px;border-radius:9px;margin-bottom:10px}.stat-violet{background:#f0edff;color:#6857d9}.stat-blue{background:#eaf4ff;color:#5a9bd9}.stat-orange{background:#fff2e9;color:#e99a5c}.stat-green{background:#e7f7f0;color:#4db98e}.stat-label{font-size:10px;color:#81899b}.stat-value{font:700 22px 'DM Sans','IBM Plex Sans Arabic';margin:2px 0 1px;letter-spacing:-.5px}.stat-detail{font-size:9px;color:#a0a6b3}.trend{font:600 9px 'IBM Plex Sans Arabic';color:#4bb88c;background:#e8f7f0;padding:3px 5px;border-radius:5px;margin-right:7px;vertical-align:middle}.dashboard-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:14px}.panel{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:17px 18px}.section-heading{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:15px}.title-line{display:flex;align-items:center;gap:8px}.title-line h2{font-size:13px;margin:0;font-weight:600}.heading-icon{width:28px;height:28px;border-radius:8px;display:grid;place-items:center}.violet-icon{color:#6654d5;background:#f0edff}.orange-icon{color:#e99358;background:#fff1e6}.green-icon{color:#4ab58b;background:#e6f7ef}.section-heading p{font-size:9px;color:#a0a6b4;margin:5px 0 0 36px}.text-action,.agenda-link{display:flex;align-items:center;gap:6px;background:none;border:0;color:#7768d3;font-size:9px;padding:5px}.courses-list{display:grid;gap:9px}.course-card{display:flex;gap:11px;border:1px solid var(--line);border-radius:10px;padding:11px;background:var(--surface)}.course-icon{width:39px;height:39px;flex:none;border-radius:11px;display:grid;place-items:center;font-weight:600;font-size:19px}.course-icon.violet{color:#6b59d9;background:#f0edff}.course-icon.blue{color:#569bd7;background:#eaf4ff}.course-icon.peach{color:#e39a61;background:#fff1e7}.course-icon.mint{color:#46ad86;background:#e7f7f0}.course-info{flex:1;min-width:0}.course-title-row{display:flex;align-items:center;justify-content:space-between}.course-title-row strong{font-size:11px}.dots{border:0;background:transparent;color:#a6adbb;padding:0;display:grid;place-items:center}.course-info>span{display:block;color:#a0a6b4;font-size:9px;margin:1px 0 8px}.course-info>span i{display:inline-block;width:3px;height:3px;border-radius:50%;background:#c1c6d0;vertical-align:middle;margin:0 5px}.progress-meta{display:flex;justify-content:space-between;font-size:8px;color:#a0a6b4;margin-bottom:4px}.progress-meta b{color:#747d8e;font:600 9px 'DM Sans'}.progress-track{height:4px;border-radius:8px;background:#f0f1f5;overflow:hidden}.dark .progress-track{background:#303746}.progress-fill{height:100%;border-radius:8px;background:#7564e6}.progress-fill.blue{background:#66a9df}.progress-fill.peach{background:#eeac75}.progress-fill.mint{background:#5fc49c}.add-course{width:100%;height:34px;border:1px dashed #ded9f6;background:transparent;color:#7262ce;border-radius:8px;font-size:10px;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:6px}.add-course:hover{background:var(--soft)}.empty-search{padding:30px;text-align:center;color:var(--muted);font-size:11px}.agenda-list{display:grid}.agenda-item{display:grid;grid-template-columns:49px 9px 1fr auto;align-items:center;gap:10px;min-height:59px;border-bottom:1px solid var(--line)}.agenda-item:last-child{border-bottom:0}.agenda-time{text-align:right;display:grid;gap:1px}.agenda-time b{font:600 11px 'DM Sans','IBM Plex Sans Arabic'}.agenda-time small{font-size:8px;color:#a4aab7}.agenda-marker{width:6px;height:34px;border-radius:5px}.violet-line{background:#8675eb}.blue-line{background:#69ace1}.green-line{background:#63c69d}.agenda-task{display:grid;gap:4px}.agenda-task strong{font-size:9px;font-weight:600}.agenda-task small{font-size:8px;color:#a0a6b4}.agenda-status{font-size:8px;color:#a0a6b4;white-space:nowrap}.agenda-link{margin:10px auto 0}.activity-panel{min-height:182px}.activity-list{display:grid}.activity-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}.activity-row:last-child{border-bottom:0}.activity-icon{width:30px;height:30px;border-radius:9px;display:grid;place-items:center}.activity-green{color:#4eb78d;background:#e8f7f0}.activity-blue{color:#599ed7;background:#eaf4ff}.activity-orange{color:#e49a5e;background:#fff1e7}.activity-row>div{display:grid;gap:3px;flex:1}.activity-row strong{font-size:9px}.activity-row small{font-size:8px;color:#a0a6b4}.focus-panel{min-height:182px;display:flex;flex-direction:column;justify-content:center}.focus-copy{display:flex;gap:10px;align-items:center}.focus-icon{width:34px;height:34px;border-radius:10px;background:#f0edff;color:#6b59d9;display:grid;place-items:center}.focus-copy strong{font-size:11px}.focus-copy p{font-size:9px;color:#a0a6b4;margin:3px 0}.focus-panel>button{margin:15px 0 11px;background:var(--soft);color:#6957d5;border:0;border-radius:7px;padding:8px 10px;font-size:9px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:7px}.focus-progress{height:5px;border-radius:5px;background:#f0f1f5;overflow:hidden}.focus-progress span{display:block;height:100%;background:#7664e5;border-radius:5px}.focus-panel>small{font-size:8px;color:#a0a6b4;margin-top:6px}.focus-panel>small b{color:#767f90;margin-right:5px}.page-footer{display:flex;justify-content:space-between;color:#a7adba;font-size:9px;padding:23px 1px 0}.heart{color:#e88f9d;margin-right:3px}.modal-backdrop{position:fixed;inset:0;background:#15172766;z-index:10;display:grid;place-items:center;padding:18px;backdrop-filter:blur(4px)}.modal{position:relative;width:min(100%,410px);background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:25px;box-shadow:0 22px 80px #11142a35;animation:pop .18s ease-out}.modal-close{position:absolute;left:16px;top:16px}.modal-icon{width:42px;height:42px;border-radius:12px;background:var(--soft);color:var(--brand);display:grid;place-items:center}.modal h2{font-size:17px;margin:14px 0 4px}.modal>p{font-size:11px;color:var(--muted);margin:0 0 20px}.modal>label{display:block;font-size:10px;margin-bottom:7px}.modal>input{width:100%;height:41px;border:1px solid var(--line);background:var(--surface-2);border-radius:8px;padding:0 11px;outline:none;color:var(--text);font-size:11px}.modal>input:focus{border-color:var(--brand);box-shadow:0 0 0 3px #6555d51c}.modal-actions{display:flex;gap:8px;margin-top:17px}.modal-actions button{height:37px;border-radius:8px;padding:0 12px;font-size:10px;display:flex;align-items:center;justify-content:center;gap:6px}.cancel-btn{border:1px solid var(--line);background:var(--surface);color:var(--muted)}.primary-btn{border:0;background:#5d4bd9;color:#fff;flex:1}.local-note{display:block;margin-top:13px;color:var(--muted);font-size:9px;line-height:1.7}.toast{position:fixed;z-index:20;bottom:22px;left:50%;transform:translateX(-50%);background:#252a38;color:#fff;border-radius:9px;display:flex;align-items:center;gap:8px;padding:11px 15px;font-size:11px;box-shadow:0 8px 30px #0003;animation:pop .2s ease-out}.toast svg{color:#6cdbab}.scrim{display:none}@keyframes pop{from{opacity:0;transform:translateY(7px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
-@media(min-width:1450px){.content{padding-top:38px}.hero-card{height:244px}.hero-art{height:244px}.stats-grid{margin:20px 0}.panel{padding:19px 21px}.course-card{padding:13px}.stat-card{min-height:125px}}
-@media(max-width:1100px){.content{padding:27px 25px 18px}.topbar{padding:0 25px}.sidebar{width:232px}.main-area{margin-right:232px}.hero-art{left:0;opacity:.85}.dashboard-grid{grid-template-columns:1fr 1fr}.agenda-item{grid-template-columns:43px 7px 1fr;gap:8px}.agenda-status{display:none}}
-@media(max-width:780px){.sidebar{transform:translateX(110%);right:0;left:auto;width:270px;transition:transform .24s;box-shadow:-15px 0 40px #15172712}.sidebar-open{transform:translateX(0)}.mobile-close{display:grid!important}.scrim{display:block;position:fixed;inset:0;background:#12152268;border:0;z-index:4}.main-area{margin-right:0}.topbar{height:60px;padding:0 17px}.menu-toggle{display:grid}.crumb{font-size:10px}.search-box{width:36px;padding:0;justify-content:center;border-color:transparent;background:transparent}.search-box input,.search-box kbd{display:none}.topbar-actions{gap:8px}.content{padding:23px 17px 15px}.welcome-row{align-items:flex-start}.welcome-row h1{font-size:22px}.welcome-row p{font-size:10px;max-width:300px;line-height:1.7}.date-pill{font-size:0;padding:9px}.date-pill svg{width:17px;height:17px}.hero-card{height:211px;padding:23px}.hero-art{left:-103px;opacity:.45}.hero-copy h2{font-size:23px}.hero-copy p{font-size:9px}.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:12px 0}.stat-card{min-height:108px;padding:12px}.dashboard-grid{grid-template-columns:1fr;gap:11px}.activity-panel,.focus-panel{min-height:auto}.activity-panel{order:3}.focus-panel{order:4}.agenda-panel{order:2}.courses-panel{order:1}.page-footer{padding-top:18px;font-size:8px}}
-@media(max-width:420px){.topbar-actions{gap:5px}.notification,.theme-toggle{width:32px;height:32px}.top-avatar{width:30px;height:30px}.topbar{padding:0 12px}.content{padding-right:13px;padding-left:13px}.welcome-row h1{font-size:20px}.welcome-row p{max-width:245px}.hero-card{padding:19px}.hero-art{left:-145px}.hero-copy h2{font-size:21px}.hero-copy p{max-width:215px}.date-pill{margin-top:6px}}
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react'
+import {
+  Activity,
+  ArrowDownLeft,
+  ArrowLeft,
+  ArrowUpLeft,
+  BookOpen,
+  CalendarDays,
+  Check,
+  ChevronDown,
+  CircleHelp,
+  Clock3,
+  Download,
+  FileText,
+  GraduationCap,
+  LayoutDashboard,
+  Library,
+  Menu,
+  Moon,
+  MoreHorizontal,
+  Plus,
+  Search,
+  Settings2,
+  Sparkles,
+  Sun,
+  Target,
+  UploadCloud,
+  X,
+} from 'lucide-react'
+
+type Course = {
+  id: string
+  title: string
+  teacher: string
+  level: string
+  color: string
+  progress: number
+  lessons: number
+}
+
+type User = {
+  id: string
+  name: string
+  email: string
+  role: string
+}
+
+type LibraryFile = {
+  id: string
+  name: string
+  type: string
+  size: number
+  uploadedAt: string
+  course: string
+}
+
+const starterCourses: Course[] = [
+  { id: 'c1', title: 'الرياضيات', teacher: 'الصف الثاني الثانوي', level: 'الثانوية', color: 'violet', progress: 68, lessons: 12 },
+  { id: 'c2', title: 'الفيزياء', teacher: 'الصف الثاني الثانوي', level: 'الثانوية', color: 'blue', progress: 42, lessons: 8 },
+  { id: 'c3', title: 'اللغة العربية', teacher: 'الصف الثاني الثانوي', level: 'الثانوية', color: 'peach', progress: 84, lessons: 16 },
+]
+
+const navItems = [
+  { title: 'الرئيسية', icon: LayoutDashboard },
+  { title: 'موادي الدراسية', icon: BookOpen },
+  { title: 'المكتبة الذكية', icon: Library },
+  { title: 'المساعد الذكي', icon: Sparkles },
+  { title: 'ملخصات المحاضرات', icon: FileText },
+  { title: 'الاختبارات', icon: Target },
+]
+
+const colorOptions = ['violet', 'blue', 'peach', 'mint'] as const
+
+function App() {
+  const [active, setActive] = useState('الرئيسية')
+  const [dark, setDark] = useState(false)
+  const [query, setQuery] = useState('')
+  const [showAdd, setShowAdd] = useState(false)
+  const [mobileNav, setMobileNav] = useState(false)
+  const [toast, setToast] = useState('')
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login')
+  const [loading, setLoading] = useState(false)
+  const [user, setUser] = useState<User | null>(null)
+  const [token, setToken] = useState<string | null>(null)
+  const [courses, setCourses] = useState<Course[]>(starterCourses)
+  const [libraryFiles, setLibraryFiles] = useState<LibraryFile[]>([
+    { id: 'lib-1', name: 'ملخص الفيزياء', type: 'application/pdf', size: 2250000, uploadedAt: '2025-10-15T10:30:00.000Z', course: 'الفيزياء' },
+    { id: 'lib-2', name: 'أوراق مراجعة العربية.docx', type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', size: 1400000, uploadedAt: '2025-10-14T12:00:00.000Z', course: 'اللغة العربية' },
+  ])
+  const [authForm, setAuthForm] = useState({ name: '', email: 'ahmed@example.com', password: 'password123' })
+  const [courseForm, setCourseForm] = useState({ title: '', teacher: 'المعلم', level: 'الثانوية', color: 'violet' })
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem('rafiq-user')
+    const savedToken = localStorage.getItem('rafiq-token')
+    if (savedUser && savedToken) {
+      try {
+        const parsedUser = JSON.parse(savedUser) as User
+        setUser(parsedUser)
+        setToken(savedToken)
+        void fetchCourses(savedToken)
+        void fetchLibraryFiles(savedToken)
+      } catch {
+        localStorage.removeItem('rafiq-user')
+        localStorage.removeItem('rafiq-token')
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('rafiq-user', JSON.stringify(user))
+      if (token) localStorage.setItem('rafiq-token', token)
+    } else {
+      localStorage.removeItem('rafiq-user')
+      localStorage.removeItem('rafiq-token')
+    }
+  }, [user, token])
+
+  const visibleCourses = useMemo(
+    () => courses.filter((course) => course.title.includes(query.trim()) || course.teacher.includes(query.trim())),
+    [courses, query],
+  )
+
+  const visibleLibraryFiles = useMemo(
+    () => libraryFiles.filter((file) => file.name.toLowerCase().includes(query.trim().toLowerCase())),
+    [libraryFiles, query],
+  )
+
+  const notify = (message: string) => {
+    setToast(message)
+    window.setTimeout(() => setToast(''), 2600)
+  }
+
+  const fetchCourses = async (authToken: string) => {
+    try {
+      const response = await fetch('/api/courses', {
+        headers: { Authorization: `Bearer ${authToken}` },
+      })
+
+      if (!response.ok) throw new Error('Courses endpoint unavailable')
+
+      const data = (await response.json()) as { items?: Course[] }
+      if (Array.isArray(data.items) && data.items.length > 0) {
+        setCourses(data.items)
+      }
+    } catch {
+      const saved = JSON.parse(localStorage.getItem('rafiq-courses') ?? '[]') as Course[]
+      if (saved.length > 0) setCourses(saved)
+    }
+  }
+
+  const fetchLibraryFiles = async (authToken: string) => {
+    try {
+      const response = await fetch('/api/library/files', {
+        headers: { Authorization: `Bearer ${authToken}` },
+      })
+
+      if (!response.ok) throw new Error('Library endpoint unavailable')
+
+      const data = (await response.json()) as { items?: LibraryFile[] }
+      if (Array.isArray(data.items) && data.items.length > 0) {
+        setLibraryFiles(data.items)
+        localStorage.setItem('rafiq-library-files', JSON.stringify(data.items))
+      }
+    } catch {
+      const saved = JSON.parse(localStorage.getItem('rafiq-library-files') ?? '[]') as LibraryFile[]
+      if (saved.length > 0) setLibraryFiles(saved)
+    }
+  }
+
+  const saveCoursesLocally = (nextCourses: Course[]) => {
+    localStorage.setItem('rafiq-courses', JSON.stringify(nextCourses))
+    setCourses(nextCourses)
+  }
+
+  const handleAuthSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setLoading(true)
+
+    try {
+      const endpoint = authMode === 'register' ? '/api/auth/register' : '/api/auth/login'
+      const payload = authMode === 'register'
+        ? { name: authForm.name, email: authForm.email, password: authForm.password }
+        : { email: authForm.email, password: authForm.password }
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+
+      const data = (await response.json()) as { token?: string; user?: User; message?: string }
+      if (!response.ok || !data.token || !data.user) {
+        throw new Error(data.message ?? 'تعذر معالجة تسجيل الدخول')
+      }
+
+      setUser(data.user)
+      setToken(data.token)
+      setActive('الرئيسية')
+      notify(authMode === 'register' ? 'تم إنشاء الحساب بنجاح' : 'تم تسجيل الدخول بنجاح')
+      setAuthForm({ name: '', email: '', password: '' })
+      await fetchCourses(data.token)
+      await fetchLibraryFiles(data.token)
+    } catch (error) {
+      const fallbackUser: User = {
+        id: 'local-user',
+        name: authMode === 'register' ? authForm.name || 'طالب جديد' : 'محمد أحمد',
+        email: authForm.email || 'student@rafiq.ai',
+        role: 'student',
+      }
+      const fallbackToken = 'local-token'
+      setUser(fallbackUser)
+      setToken(fallbackToken)
+      localStorage.setItem('rafiq-user', JSON.stringify(fallbackUser))
+      localStorage.setItem('rafiq-token', fallbackToken)
+      notify(error instanceof Error ? error.message : 'تم تسجيل الدخول محلياً في الوضع التجريبي')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleAddCourse = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const title = courseForm.title.trim()
+    if (!title) return
+
+    const nextCourse: Course = {
+      id: `course-${Date.now()}`,
+      title,
+      teacher: courseForm.teacher || 'المعلم',
+      level: courseForm.level || 'الثانوية',
+      color: courseForm.color,
+      progress: 0,
+      lessons: 0,
+    }
+
+    if (token) {
+      try {
+        const response = await fetch('/api/courses', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            title: nextCourse.title,
+            teacher: nextCourse.teacher,
+            level: nextCourse.level,
+            color: nextCourse.color,
+            progress: nextCourse.progress,
+            lessons: nextCourse.lessons,
+          }),
+        })
+
+        if (response.ok) {
+          const data = (await response.json()) as { item?: Course }
+          if (data.item) {
+            const merged = [data.item, ...courses]
+            saveCoursesLocally(merged)
+            setShowAdd(false)
+            setCourseForm({ title: '', teacher: 'المعلم', level: 'الثانوية', color: 'violet' })
+            notify('تمت إضافة المادة بنجاح')
+            return
+          }
+        }
+      } catch {
+        // fallback below
+      }
+    }
+
+    saveCoursesLocally([nextCourse, ...courses])
+    setShowAdd(false)
+    setCourseForm({ title: '', teacher: 'المعلم', level: 'الثانوية', color: 'violet' })
+    notify('تمت إضافة المادة بنجاح')
+  }
+
+  const handleLibraryUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    const metadata: LibraryFile = {
+      id: `file-${Date.now()}`,
+      name: file.name,
+      type: file.type || 'application/octet-stream',
+      size: file.size,
+      uploadedAt: new Date().toISOString(),
+      course: active === 'المكتبة الذكية' ? 'عام' : 'المكتبة',
+    }
+
+    if (token) {
+      try {
+        const response = await fetch('/api/library/files', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            name: metadata.name,
+            type: metadata.type,
+            size: metadata.size,
+            course: metadata.course,
+          }),
+        })
+
+        if (response.ok) {
+          const data = (await response.json()) as { item?: LibraryFile }
+          if (data.item) {
+            setLibraryFiles((current) => [data.item!, ...current])
+            localStorage.setItem('rafiq-library-files', JSON.stringify([data.item!, ...libraryFiles]))
+            notify('تم رفع الملف بنجاح')
+            event.target.value = ''
+            return
+          }
+        }
+      } catch {
+        // fallback below
+      }
+    }
+
+    setLibraryFiles((current) => [metadata, ...current])
+    localStorage.setItem('rafiq-library-files', JSON.stringify([metadata, ...libraryFiles]))
+    notify('تم رفع الملف بنجاح')
+    event.target.value = ''
+  }
+
+  const handleLogout = () => {
+    setUser(null)
+    setToken(null)
+    setActive('الرئيسية')
+    notify('تم تسجيل الخروج بنجاح')
+  }
+
+  if (!user) {
+    return (
+      <div className={dark ? 'app dark' : 'app'}>
+        <div className="auth-shell">
+          <div className="auth-card auth-intro">
+            <div className="brand logo-block">
+              <div className="brand-mark"><GraduationCap size={22} /></div>
+              <div>
+                <strong>رفيق<span>AI</span></strong>
+                <small>رفيق المعلم</small>
+              </div>
+            </div>
+            <div className="intro-badge"><Sparkles size={15} /> منصة تعليمية عربية ذكية</div>
+            <h1>رحلة تعلم منظمة، <br />ونظام ذكي يدعمك.</h1>
+            <p>
+              أدر المواد والمحاضرات والكتب والمراجع والمساعدة الذكية في مكان واحد، مع لوحة تحكم عربية حديثة وسهلة الاستخدام.
+            </p>
+            <ul>
+              <li><Check size={15} /> إدارة المواد الدراسية</li>
+              <li><Check size={15} /> مكتبة ملفات دائمة</li>
+              <li><Check size={15} /> مساعد ذكي ومراجعات</li>
+            </ul>
+          </div>
+
+          <div className="auth-card auth-panel">
+            <div className="auth-tabs">
+              <button className={authMode === 'login' ? 'active' : ''} onClick={() => setAuthMode('login')} type="button">
+                تسجيل الدخول
+              </button>
+              <button className={authMode === 'register' ? 'active' : ''} onClick={() => setAuthMode('register')} type="button">
+                حساب جديد
+              </button>
+            </div>
+
+            <form className="auth-form" onSubmit={handleAuthSubmit}>
+              {authMode === 'register' && (
+                <label>
+                  <span>الاسم الكامل</span>
+                  <input
+                    value={authForm.name}
+                    onChange={(event) => setAuthForm((current) => ({ ...current, name: event.target.value }))}
+                    placeholder="مثال: محمد أحمد"
+                  />
+                </label>
+              )}
+
+              <label>
+                <span>البريد الإلكتروني</span>
+                <input
+                  type="email"
+                  value={authForm.email}
+                  onChange={(event) => setAuthForm((current) => ({ ...current, email: event.target.value }))}
+                  placeholder="example@domain.com"
+                />
+              </label>
+
+              <label>
+                <span>كلمة المرور</span>
+                <input
+                  type="password"
+                  value={authForm.password}
+                  onChange={(event) => setAuthForm((current) => ({ ...current, password: event.target.value }))}
+                  placeholder="********"
+                />
+              </label>
+
+              <button className="primary-btn auth-submit" type="submit" disabled={loading}>
+                {loading ? 'جاري المعالجة...' : authMode === 'login' ? 'دخول إلى المنصة' : 'إنشاء الحساب'}
+              </button>
+            </form>
+
+            <div className="auth-meta">
+              <small>الوضع الحالي: تمكين محلي للمرحلة الثانية</small>
+              <small>النسخة الحالية تدعم تسجيل الدخول، إنشاء الحساب، وإنشاء المواد الدراسية.</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className={dark ? 'app dark' : 'app'}>
+      <aside className={`sidebar ${mobileNav ? 'sidebar-open' : ''}`}>
+        <div className="brand">
+          <div className="brand-mark"><GraduationCap size={22} /></div>
+          <div>
+            <strong>رفيق<span>AI</span></strong>
+            <small>رفيق المعلم</small>
+          </div>
+          <button className="mobile-close icon-btn" onClick={() => setMobileNav(false)} aria-label="إغلاق القائمة">
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="profile-mini">
+          <div className="avatar">{user.name.split('')[0] ?? 'م'}</div>
+          <div className="profile-copy">
+            <strong>{user.name}</strong>
+            <small>{user.email}</small>
+          </div>
+          <ChevronDown size={16} className="muted" />
+        </div>
+
+        <div className="nav-label">القائمة الرئيسية</div>
+        <nav>
+          {navItems.map((item) => {
+            const Icon = item.icon
+            return (
+              <button
+                key={item.title}
+                onClick={() => {
+                  setActive(item.title)
+                  setMobileNav(false)
+                }}
+                className={`nav-item ${active === item.title ? 'selected' : ''}`}
+                type="button"
+              >
+                <Icon size={18} />
+                <span>{item.title}</span>
+                {item.title === 'المساعد الذكي' && <span className="new-badge">AI</span>}
+              </button>
+            )
+          })}
+        </nav>
+
+        <div className="nav-label tools-label">مساحة الدراسة</div>
+        <nav>
+          <button className="nav-item" onClick={() => setActive('منظم الدراسة')} type="button">
+            <CalendarDays size={18} />
+            <span>منظم الدراسة</span>
+          </button>
+          <button className="nav-item" onClick={() => setActive('البطاقات التعليمية')} type="button">
+            <BookOpen size={18} />
+            <span>البطاقات التعليمية</span>
+          </button>
+        </nav>
+
+        <div className="sidebar-bottom">
+          <div className="upgrade-card">
+            <div className="upgrade-icon"><Sparkles size={17} /></div>
+            <strong>تعلّم بذكاء أكثر</strong>
+            <p>تم تجهيز المحرك الذكي ليبنى على ملفاتك الدراسية عبر المرحلة الرابعة.</p>
+            <button onClick={() => setActive('المساعد الذكي')} type="button">
+              اكتشف المساعد <ArrowLeft size={14} />
+            </button>
+          </div>
+
+          <button className="nav-item" type="button" onClick={() => setActive('الإعدادات')}>
+            <Settings2 size={18} />
+            <span>الإعدادات</span>
+          </button>
+
+          <button className="nav-item" type="button" onClick={() => notify('مركز المساعدة قريباً')}>
+            <CircleHelp size={18} />
+            <span>المساعدة والدعم</span>
+          </button>
+        </div>
+
+        <div className="sidebar-footer">
+          <button className="logout-btn" type="button" onClick={handleLogout}>تسجيل الخروج</button>
+        </div>
+      </aside>
+
+      {mobileNav && <button className="scrim" onClick={() => setMobileNav(false)} aria-label="إغلاق القائمة" type="button" />}
+
+      <main className="main-area">
+        <header className="topbar">
+          <div className="topbar-right">
+            <button className="icon-btn menu-toggle" onClick={() => setMobileNav(true)} aria-label="فتح القائمة" type="button">
+              <Menu size={20} />
+            </button>
+            <div className="crumb">
+              مساحة التعلم <ArrowLeft size={13} /> <strong>{active}</strong>
+            </div>
+          </div>
+
+          <div className="topbar-actions">
+            <label className="search-box">
+              <Search size={17} />
+              <input aria-label="ابحث" placeholder="ابحث عن مادة أو ملف..." value={query} onChange={(event) => setQuery(event.target.value)} />
+              <kbd>⌘ K</kbd>
+            </label>
+            <button className="icon-btn theme-toggle" onClick={() => setDark((current) => !current)} aria-label="تبديل الوضع" type="button">
+              <span className="theme-tip">{dark ? 'الوضع النهاري' : 'الوضع الليلي'}</span>
+              {dark ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+            <button className="notification" onClick={() => notify('لا توجد إشعارات جديدة')} aria-label="الإشعارات" type="button">
+              <Activity size={18} />
+              <i />
+            </button>
+            <div className="avatar top-avatar">{user.name.split('')[0] ?? 'م'}</div>
+          </div>
+        </header>
+
+        <div className="content">
+          <section className="welcome-row">
+            <div>
+              <div className="eyebrow"><span className="live-dot" /> رحلتك الدراسية مستمرة</div>
+              <h1>أهلاً بك، {user.name.split(' ')[0]} <span className="wave">✦</span></h1>
+              <p>خطوة صغيرة كل يوم، تصنع فرقاً كبيراً في مستقبلك.</p>
+            </div>
+            <button className="date-pill" type="button">
+              <CalendarDays size={16} /> الثلاثاء، ١٤ أكتوبر ٢٠٢٥
+            </button>
+          </section>
+
+          <section className="hero-card">
+            <div className="hero-decoration deco-one" />
+            <div className="hero-decoration deco-two" />
+            <div className="hero-copy">
+              <span className="hero-label"><Sparkles size={14} /> رفيقك الذكي</span>
+              <h2>كل فكرة كبيرة،<br />تبدأ بسؤال.</h2>
+              <p>اسأل رفيقك الذكي، وسيكون معك خطوة بخطوة حتى تصل إلى الفهم.</p>
+              <button type="button" onClick={() => setActive('المساعد الذكي')}>
+                ابدأ محادثة جديدة <ArrowLeft size={16} />
+              </button>
+            </div>
+            <div className="hero-art">
+              <div className="orbit orbit-a" />
+              <div className="orbit orbit-b" />
+              <div className="sparkle-star star-a">✳</div>
+              <div className="sparkle-star star-b">✦</div>
+              <div className="ai-orb"><Sparkles size={39} /></div>
+              <div className="float-chip chip-a"><span>✦</span> شرح مبسّط</div>
+              <div className="float-chip chip-b"><span>✓</span> خطوة بخطوة</div>
+            </div>
+          </section>
+
+          <section className="panel library-panel">
+            <div className="library-header">
+              <div>
+                <div className="title-line">
+                  <span className="heading-icon violet-icon"><Library size={17} /></span>
+                  <h2>المكتبة الذكية</h2>
+                </div>
+                <p>ملفاتك الدراسية ومراجعك في مكان واحد.</p>
+              </div>
+              <div className="library-actions">
+                <label className="upload-button" htmlFor="library-upload">
+                  <UploadCloud size={16} /> رفع ملف
+                </label>
+                <input id="library-upload" type="file" onChange={handleLibraryUpload} hidden />
+              </div>
+            </div>
+
+            <div className="library-list">
+              {visibleLibraryFiles.length ? (
+                visibleLibraryFiles.map((file) => (
+                  <article key={file.id} className="library-item">
+                    <div className="file-badge">{file.type.includes('pdf') ? 'PDF' : file.type.includes('word') ? 'DOCX' : 'FILE'}</div>
+                    <div className="file-meta">
+                      <strong>{file.name}</strong>
+                      <small>{file.course} • {formatBytes(file.size)} • {new Date(file.uploadedAt).toLocaleDateString('ar-EG')}</small>
+                    </div>
+                    <button type="button" className="download-btn" onClick={() => notify(`تحميل ${file.name} قريباً`)}>
+                      <Download size={14} /> تحميل
+                    </button>
+                  </article>
+                ))
+              ) : (
+                <div className="empty-search">لا توجد ملفات في المكتبة حتى الآن.</div>
+              )}
+            </div>
+          </section>
+
+          <section className="stats-grid">
+            <Stat icon={<BookOpen size={19} />} color="stat-violet" label="المواد الدراسية" value={String(courses.length).padStart(2, '0')} detail="مواد نشطة" />
+            <Stat icon={<FileText size={19} />} color="stat-blue" label="الملفات والمراجع" value={String(libraryFiles.length).padStart(2, '0')} detail="ملفات في مكتبتك" />
+            <Stat icon={<GraduationCap size={19} />} color="stat-orange" label="المحاضرات" value="24" detail="محاضرة محفوظة" trend="+٣ هذا الأسبوع" />
+            <Stat icon={<Target size={19} />} color="stat-green" label="معدل الإنجاز" value="76%" detail="مقارنة بالأسبوع الماضي" trend="↑ ١٢٪" />
+          </section>
+
+          <div className="dashboard-grid">
+            <section className="panel courses-panel">
+              <div className="section-heading">
+                <div>
+                  <div className="title-line">
+                    <span className="heading-icon violet-icon"><BookOpen size={17} /></span>
+                    <h2>موادي الدراسية</h2>
+                  </div>
+                  <p>تابع تقدمك وأنجز دروسك القادمة</p>
+                </div>
+                <button className="text-action" type="button" onClick={() => setActive('موادي الدراسية')}>
+                  عرض الكل <ArrowLeft size={15} />
+                </button>
+              </div>
+
+              <div className="courses-list">
+                {visibleCourses.length ? (
+                  visibleCourses.map((course) => (
+                    <article key={course.id} className="course-card">
+                      <div className={`course-icon ${course.color}`}>{course.title.slice(0, 1)}</div>
+                      <div className="course-info">
+                        <div className="course-title-row">
+                          <strong>{course.title}</strong>
+                          <button type="button" className="dots" aria-label={`خيارات ${course.title}`} onClick={() => notify(`خيارات ${course.title} متاحة قريباً`)}>
+                            <MoreHorizontal size={19} />
+                          </button>
+                        </div>
+                        <span>
+                          {course.teacher} <i /> {course.lessons} درس
+                        </span>
+                        <div className="progress-meta">
+                          <small>التقدم في المادة</small>
+                          <b>{course.progress}%</b>
+                        </div>
+                        <div className="progress-track">
+                          <div style={{ width: `${course.progress}%` }} className={`progress-fill ${course.color}`} />
+                        </div>
+                      </div>
+                    </article>
+                  ))
+                ) : (
+                  <div className="empty-search">لا توجد نتائج مطابقة لـ «{query}»</div>
+                )}
+              </div>
+
+              <button className="add-course" onClick={() => setShowAdd(true)} type="button">
+                <Plus size={17} /> إضافة مادة دراسية
+              </button>
+            </section>
+
+            <section className="panel agenda-panel">
+              <div className="section-heading">
+                <div>
+                  <div className="title-line">
+                    <span className="heading-icon orange-icon"><CalendarDays size={17} /></span>
+                    <h2>خطة اليوم</h2>
+                  </div>
+                  <p>الأربعاء، ١٥ أكتوبر</p>
+                </div>
+                <button className="icon-btn tiny" type="button" onClick={() => notify('عرض التقويم الكامل قريباً')} aria-label="المزيد">
+                  <MoreHorizontal size={19} />
+                </button>
+              </div>
+
+              <div className="agenda-list">
+                <Agenda time="٠٩:٠٠" period="صباحاً" color="violet-line" title="مراجعة التفاضل والتكامل" subject="الرياضيات · الدرس ٤" status="قريباً" />
+                <Agenda time="١١:٣٠" period="صباحاً" color="blue-line" title="قراءة الفصل الثالث" subject="الفيزياء · الحركة" status="بعد ساعتين" />
+                <Agenda time="٠٢:٠٠" period="مساءً" color="green-line" title="حل واجب النحو" subject="اللغة العربية · ٥ أسئلة" status="اليوم" />
+              </div>
+
+              <button className="agenda-link" onClick={() => setActive('منظم الدراسة')} type="button">
+                عرض جدول الدراسة <ArrowLeft size={15} />
+              </button>
+            </section>
+
+            <section className="panel activity-panel">
+              <div className="section-heading">
+                <div>
+                  <div className="title-line">
+                    <span className="heading-icon green-icon"><Activity size={17} /></span>
+                    <h2>آخر نشاط</h2>
+                  </div>
+                  <p>إنجازاتك الأخيرة في التعلم</p>
+                </div>
+                <button className="text-action" type="button" onClick={() => notify('سجل النشاطات الكامل قريباً')}>
+                  كل النشاطات <ArrowLeft size={15} />
+                </button>
+              </div>
+
+              <div className="activity-list">
+                <ActivityRow icon={<Check size={16} />} color="activity-green" title="أكملت درس النهايات" detail="الرياضيات · منذ ساعتين" />
+                <ActivityRow icon={<FileText size={16} />} color="activity-blue" title="أضفت ملخصاً جديداً" detail="الفيزياء · أمس" />
+                <ActivityRow icon={<Target size={16} />} color="activity-orange" title="أنهيت اختباراً قصيراً" detail="اللغة العربية · أمس" />
+              </div>
+            </section>
+
+            <section className="panel focus-panel">
+              <div className="focus-copy">
+                <span className="focus-icon"><Clock3 size={18} /></span>
+                <div>
+                  <strong>وقتك للتركيز</strong>
+                  <p>ابدأ جلسة دراسة قصيرة وحقق هدفك اليوم.</p>
+                </div>
+              </div>
+              <button type="button" onClick={() => notify('مؤقت التركيز — قريباً')}>ابدأ جلسة تركيز <ArrowUpLeft size={15} /></button>
+              <div className="focus-progress"><span style={{ width: '64%' }} /></div>
+              <small>هدف اليوم <b>٢ من ٣ ساعات</b></small>
+            </section>
+          </div>
+
+          <footer className="page-footer">
+            <span>© ٢٠٢٥ رفيق AI</span>
+            <span>صُمّم بحب لرحلتك التعليمية <span className="heart">♥</span></span>
+          </footer>
+        </div>
+      </main>
+
+      {showAdd && (
+        <div className="modal-backdrop" onClick={() => setShowAdd(false)}>
+          <form className="modal" onSubmit={handleAddCourse} onClick={(event) => event.stopPropagation()}>
+            <button type="button" className="modal-close icon-btn" aria-label="إغلاق" onClick={() => setShowAdd(false)}>
+              <X size={19} />
+            </button>
+            <div className="modal-icon"><BookOpen size={22} /></div>
+            <h2>إضافة مادة دراسية</h2>
+            <p>أنشئ مساحة لتنظيم دروسك وملفاتك.</p>
+
+            <label htmlFor="course-title">اسم المادة</label>
+            <input
+              id="course-title"
+              autoFocus
+              placeholder="مثال: الكيمياء"
+              value={courseForm.title}
+              onChange={(event) => setCourseForm((current) => ({ ...current, title: event.target.value }))}
+              maxLength={70}
+              required
+            />
+
+            <div className="field-grid">
+              <label>
+                <span>اسم المعلم</span>
+                <input
+                  value={courseForm.teacher}
+                  onChange={(event) => setCourseForm((current) => ({ ...current, teacher: event.target.value }))}
+                  placeholder="اسم المعلم"
+                />
+              </label>
+
+              <label>
+                <span>المستوى</span>
+                <input
+                  value={courseForm.level}
+                  onChange={(event) => setCourseForm((current) => ({ ...current, level: event.target.value }))}
+                  placeholder="الثانوية"
+                />
+              </label>
+            </div>
+
+            <div className="field-grid compact">
+              {colorOptions.map((color) => (
+                <button
+                  key={color}
+                  type="button"
+                  className={`swatch ${courseForm.color === color ? 'selected' : ''}`}
+                  onClick={() => setCourseForm((current) => ({ ...current, color }))}
+                >
+                  <span className={`swatch-dot ${color}`} />
+                </button>
+              ))}
+            </div>
+
+            <div className="modal-actions">
+              <button type="button" className="cancel-btn" onClick={() => setShowAdd(false)}>إلغاء</button>
+              <button type="submit" className="primary-btn">إضافة المادة <Plus size={16} /></button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {toast && <div className="toast"><Check size={17} />{toast}</div>}
+    </div>
+  )
+}
+
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return `${bytes} بايت`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+function Stat({
+  icon,
+  color,
+  label,
+  value,
+  detail,
+  trend,
+}: {
+  icon: React.ReactNode
+  color: string
+  label: string
+  value: string
+  detail: string
+  trend?: string
+}) {
+  return (
+    <article className="stat-card">
+      <div className={`stat-icon ${color}`}>{icon}</div>
+      <span className="stat-label">{label}</span>
+      <div className="stat-value">
+        {value}
+        {trend && <small className="trend">{trend}</small>}
+      </div>
+      <small className="stat-detail">{detail}</small>
+    </article>
+  )
+}
+
+function Agenda({ time, period, color, title, subject, status }: { time: string; period: string; color: string; title: string; subject: string; status: string }) {
+  return (
+    <div className="agenda-item">
+      <div className="agenda-time">
+        <b>{time}</b>
+        <small>{period}</small>
+      </div>
+      <div className={`agenda-marker ${color}`} />
+      <div className="agenda-task">
+        <strong>{title}</strong>
+        <small>{subject}</small>
+      </div>
+      <span className="agenda-status">{status}</span>
+    </div>
+  )
+}
+
+function ActivityRow({ icon, color, title, detail }: { icon: React.ReactNode; color: string; title: string; detail: string }) {
+  return (
+    <div className="activity-row">
+      <span className={`activity-icon ${color}`}>{icon}</span>
+      <div>
+        <strong>{title}</strong>
+        <small>{detail}</small>
+      </div>
+      <ArrowDownLeft size={15} className="muted" />
+    </div>
+  )
+}
+
+export default App
