@@ -1,0 +1,1 @@
+export default { content: ['./index.html', './src/**/*.{ts,tsx}'], theme: { extend: { fontFamily: { sans: ['IBM Plex Sans Arabic', 'DM Sans', 'sans-serif'] }, colors: { ink: '#182230', brand: '#5948d8', mint: '#dff6ee' } } }, plugins: [] }
