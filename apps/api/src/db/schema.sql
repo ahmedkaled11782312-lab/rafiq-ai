@@ -18,18 +18,46 @@ CREATE TABLE IF NOT EXISTS courses (
   teacher TEXT NOT NULL DEFAULT 'المعلم',
   level TEXT NOT NULL DEFAULT 'الثانوية',
   color TEXT NOT NULL DEFAULT 'violet',
-  progress INTEGER NOT NULL DEFAULT 0 CHECK (progress BETWEEN 0 AND 100),
-  lessons INTEGER NOT NULL DEFAULT 0 CHECK (lessons >= 0),
+  progress INTEGER NOT NULL DEFAULT 0,
+  lessons INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT courses_progress_range_check CHECK (progress BETWEEN 0 AND 100),
+  CONSTRAINT courses_lessons_nonnegative_check CHECK (lessons >= 0)
 );
-CREATE INDEX IF NOT EXISTS courses_user_created_idx ON courses(user_id, created_at DESC);
 
+-- Keep existing installations in sync without recreating tables or discarding rows.
 ALTER TABLE courses ADD COLUMN IF NOT EXISTS teacher TEXT NOT NULL DEFAULT 'المعلم';
 ALTER TABLE courses ADD COLUMN IF NOT EXISTS level TEXT NOT NULL DEFAULT 'الثانوية';
 ALTER TABLE courses ADD COLUMN IF NOT EXISTS color TEXT NOT NULL DEFAULT 'violet';
 ALTER TABLE courses ADD COLUMN IF NOT EXISTS progress INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE courses ADD COLUMN IF NOT EXISTS lessons INTEGER NOT NULL DEFAULT 0;
+
+-- Normalize legacy invalid values before validating the constraints below.
+UPDATE courses
+SET progress = LEAST(GREATEST(COALESCE(progress, 0), 0), 100),
+    lessons = GREATEST(COALESCE(lessons, 0), 0)
+WHERE progress IS NULL OR progress < 0 OR progress > 100
+   OR lessons IS NULL OR lessons < 0;
+ALTER TABLE courses ALTER COLUMN progress SET DEFAULT 0;
+ALTER TABLE courses ALTER COLUMN progress SET NOT NULL;
+ALTER TABLE courses ALTER COLUMN lessons SET DEFAULT 0;
+ALTER TABLE courses ALTER COLUMN lessons SET NOT NULL;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'courses'::regclass AND conname = 'courses_progress_range_check') THEN
+    ALTER TABLE courses ADD CONSTRAINT courses_progress_range_check CHECK (progress BETWEEN 0 AND 100) NOT VALID;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'courses'::regclass AND conname = 'courses_lessons_nonnegative_check') THEN
+    ALTER TABLE courses ADD CONSTRAINT courses_lessons_nonnegative_check CHECK (lessons >= 0) NOT VALID;
+  END IF;
+END $$;
+ALTER TABLE courses VALIDATE CONSTRAINT courses_progress_range_check;
+ALTER TABLE courses VALIDATE CONSTRAINT courses_lessons_nonnegative_check;
+
+CREATE INDEX IF NOT EXISTS courses_user_created_idx ON courses(user_id, created_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS courses_user_id_id_uidx ON courses(user_id, id);
 
 CREATE TABLE IF NOT EXISTS chapters (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -39,12 +67,13 @@ CREATE TABLE IF NOT EXISTS chapters (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE(course_id, position)
 );
+CREATE UNIQUE INDEX IF NOT EXISTS chapters_id_course_id_uidx ON chapters(id, course_id);
 
 CREATE TABLE IF NOT EXISTS files (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  course_id UUID REFERENCES courses(id) ON DELETE SET NULL,
-  chapter_id UUID REFERENCES chapters(id) ON DELETE SET NULL,
+  course_id UUID,
+  chapter_id UUID,
   original_name TEXT NOT NULL,
   storage_key TEXT NOT NULL UNIQUE,
   mime_type TEXT NOT NULL,
@@ -53,7 +82,60 @@ CREATE TABLE IF NOT EXISTS files (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 ALTER TABLE files ADD COLUMN IF NOT EXISTS checksum_sha256 TEXT;
-ALTER TABLE files ADD COLUMN IF NOT EXISTS chapter_id UUID REFERENCES chapters(id) ON DELETE SET NULL;
+ALTER TABLE files ADD COLUMN IF NOT EXISTS chapter_id UUID;
+
+-- Preserve files while repairing legacy cross-owner or inconsistent references.
+-- Detaching bad associations is safer than deleting user content.
+UPDATE files f
+SET course_id = NULL, chapter_id = NULL
+WHERE f.course_id IS NOT NULL
+  AND NOT EXISTS (
+    SELECT 1 FROM courses c WHERE c.id = f.course_id AND c.user_id = f.user_id
+  );
+
+UPDATE files f
+SET course_id = ch.course_id
+FROM chapters ch
+JOIN courses c ON c.id = ch.course_id
+WHERE f.chapter_id = ch.id
+  AND f.course_id IS NULL
+  AND c.user_id = f.user_id;
+
+UPDATE files f
+SET chapter_id = NULL
+WHERE f.chapter_id IS NOT NULL
+  AND NOT EXISTS (
+    SELECT 1 FROM chapters ch
+    JOIN courses c ON c.id = ch.course_id
+    WHERE ch.id = f.chapter_id
+      AND ch.course_id = f.course_id
+      AND c.user_id = f.user_id
+  );
+
+-- Replace single-column associations with ownership-aware composite foreign keys.
+ALTER TABLE files DROP CONSTRAINT IF EXISTS files_course_id_fkey;
+ALTER TABLE files DROP CONSTRAINT IF EXISTS files_chapter_id_fkey;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'files'::regclass AND conname = 'files_user_course_owner_fkey') THEN
+    ALTER TABLE files ADD CONSTRAINT files_user_course_owner_fkey
+      FOREIGN KEY (user_id, course_id) REFERENCES courses(user_id, id)
+      ON DELETE SET NULL (course_id) NOT VALID;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'files'::regclass AND conname = 'files_chapter_course_match_fkey') THEN
+    ALTER TABLE files ADD CONSTRAINT files_chapter_course_match_fkey
+      FOREIGN KEY (chapter_id, course_id) REFERENCES chapters(id, course_id)
+      ON DELETE SET NULL (chapter_id) NOT VALID;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'files'::regclass AND conname = 'files_chapter_requires_course_check') THEN
+    ALTER TABLE files ADD CONSTRAINT files_chapter_requires_course_check
+      CHECK (chapter_id IS NULL OR course_id IS NOT NULL) NOT VALID;
+  END IF;
+END $$;
+ALTER TABLE files VALIDATE CONSTRAINT files_user_course_owner_fkey;
+ALTER TABLE files VALIDATE CONSTRAINT files_chapter_course_match_fkey;
+ALTER TABLE files VALIDATE CONSTRAINT files_chapter_requires_course_check;
+
 CREATE INDEX IF NOT EXISTS files_user_course_idx ON files(user_id, course_id);
 CREATE INDEX IF NOT EXISTS files_user_chapter_idx ON files(user_id, chapter_id);
 CREATE UNIQUE INDEX IF NOT EXISTS files_user_checksum_idx ON files(user_id, checksum_sha256) WHERE checksum_sha256 IS NOT NULL;
